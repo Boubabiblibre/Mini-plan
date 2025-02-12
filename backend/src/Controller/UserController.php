@@ -3,8 +3,6 @@
 namespace App\Controller;
 
 use App\Entity\User;
-use App\Form\UserType;
-use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -14,7 +12,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[Route('/user')]
+#[Route('/api/user')]
 final class UserController extends AbstractController
 {
     private Security $security;
@@ -24,13 +22,6 @@ final class UserController extends AbstractController
         $this->security = $security;
     }
 
-    #[Route(name: 'app_user_index', methods: ['GET'])]
-    public function index(UserRepository $userRepository): Response
-    {
-        return $this->render('user/index.html.twig', [
-            'users' => $userRepository->findAll(),
-        ]);
-    }
     #[Route('/api/test-auth', name: 'test_auth', methods: ['GET'])]
     public function testAuth(): JsonResponse
     {
@@ -41,23 +32,24 @@ final class UserController extends AbstractController
     }
     
     #[Route('/new', name: 'app_user_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
+    public function new(Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
+        $payload = json_decode($request->getContent(), true);
+
         $user = new User();
-        $form = $this->createForm(UserType::class, $user);
-        $form->handleRequest($request);
+        $user->setFirstname($payload['firstname']);
+        $user->setLastname($payload['lastname']);
+        $user->setEmail($payload['email']);
+        $user->setPhoneNumber($payload['phone_number']);
+        $user->setAge($payload['age']);
+        $user->setAvatar($payload['avatar']);
+        $user->setPassword($payload['password']);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->persist($user);
-            $entityManager->flush();
+        $entityManager->persist($user);
 
-            return $this->redirectToRoute('app_user_index', [], Response::HTTP_SEE_OTHER);
-        }
+        $entityManager->flush();
 
-        return $this->render('user/new.html.twig', [
-            'user' => $user,
-            'form' => $form,
-        ]);
+        return new JsonResponse($user, 200);
     }
 
     #[Route('/{id}', name: 'app_user_show', methods: ['GET'])]
@@ -69,8 +61,6 @@ final class UserController extends AbstractController
     }
 
     #[Route('/{id}', name: 'app_user_edit', methods: ['PUT', 'PATCH'])]
-
-    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function edit(Request $request, int $id, EntityManagerInterface $entityManager): JsonResponse
     {
         $user = $entityManager->getRepository(User::class)->find($id);
