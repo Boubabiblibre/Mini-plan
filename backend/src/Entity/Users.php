@@ -57,10 +57,17 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private ?\DateTimeImmutable $updated_at = null;
 
+    #[ORM\OneToMany(mappedBy: 'sender', targetEntity: Notification::class, orphanRemoval: true)]
+    private Collection $notifications;
+
+    #[ORM\Column(type: "json")]
+    private array $roles = [];
+
     public function __construct()
     {
         $this->created_at = new \DateTimeImmutable();
         $this->updated_at = new \DateTimeImmutable();
+        $this->notifications = new ArrayCollection();
     }
 
     public function getId(): ?string
@@ -109,6 +116,27 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     public function setEmail(string $email): static
     {
         $this->email = $email;
+        return $this;
+    }
+
+    public function getRoles(): array
+    {
+        // if (empty($this->roles)) {
+        //     $this->roles = ['ROLE_USER'];
+        // }
+        $roles = $this->roles;
+        if (!in_array('ROLE_USER', $roles, true)) {
+            $roles[] = 'ROLE_USER';
+        }
+        return $this->roles;
+    }
+
+    public function setRoles(array $roles): self
+    {
+        if (!in_array('ROLE_USER', $roles, true)) {
+            $roles[] = 'ROLE_USER';
+        }
+        $this->roles = $roles;
         return $this;
     }
 
@@ -205,12 +233,6 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->notifications;
     }
 
-    // ✅ Implémentation des méthodes requises par UserInterface et PasswordAuthenticatedUserInterface
-    public function getRoles(): array
-    {
-        return ['ROLE_USER']; // Par défaut, chaque utilisateur a le rôle "ROLE_USER"
-    }
-
     public function eraseCredentials(): void
     {
         // Si l'entité stocke des données sensibles temporairement, on les supprime ici
@@ -218,6 +240,6 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getUserIdentifier(): string
     {
-        return $this->email; // Symfony utilise cette méthode pour identifier l'utilisateur
+        return $this->email;
     }
 }

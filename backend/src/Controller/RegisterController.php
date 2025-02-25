@@ -2,7 +2,7 @@
 
 namespace App\Controller;
 
-use App\Entity\Users; // ✅ Corrigé : Remplace User par Users
+use App\Entity\Users;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;

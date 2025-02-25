@@ -7,9 +7,13 @@ security:
         app_user_provider:
             entity:
                 class: App\Entity\Users
-                property: email # Identifier l'utilisateur par son email
+                property: email
 
     firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+
         login:
             pattern: ^/login
             stateless: true
@@ -18,13 +22,21 @@ security:
                 username_path: email
                 password_path: password
 
+        main:  # Ajout d'un firewall principal
+            lazy: true
+            provider: app_user_provider
+            # user_checker: Symfony\Component\Security\Core\User\UserChecker
+            stateless: true
+            jwt: ~
+
         api:
-            pattern: ^/api
+            pattern: ^/
             stateless: true
             jwt: ~
 
     access_control:
         - { path: ^/login, roles: PUBLIC_ACCESS }
+        - { path: ^/subscription, roles: IS_AUTHENTICATED_FULLY }  # Ajout pour protéger /subscription
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
 
 when@test:

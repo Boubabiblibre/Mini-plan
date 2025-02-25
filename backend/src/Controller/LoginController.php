@@ -34,9 +34,12 @@ class LoginController extends AbstractController
         // Rechercher l'utilisateur par email
         $user = $userRepository->findOneBy(['email' => $email]);
 
-        if (!$user || !$passwordHasher->isPasswordValid($user, $password)) {
+        if (!$user instanceof Users || !$passwordHasher->isPasswordValid($user, $password)) {
             return $this->json(['success' => false, 'message' => 'Identifiants incorrects'], Response::HTTP_UNAUTHORIZED);
         }
+
+        // Vérification des rôles de l'utilisateur
+        //dump($user->getRoles()); exit;
 
         // Générer un token JWT
         $token = $jwtManager->create($user);

@@ -3,28 +3,28 @@
 namespace App\Controller;
 
 use App\Entity\Users;
-use App\Repository\UsersRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Attribute\Route;
-use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\Security\Core\Security;
+use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/user')]
 class UserController extends AbstractController
 {
     #[Route('/me', name: 'user_profile', methods: ['GET'])]
+    #[IsGranted('ROLE_USER')]
     public function getProfile(Security $security): JsonResponse
     {
-        /** @var Users $user */
         $user = $security->getUser();
 
-        if (!$user) {
+        if (!$user instanceof Users) {
             return new JsonResponse(['error' => 'Utilisateur non authentifié'], JsonResponse::HTTP_UNAUTHORIZED);
         }
 
-        return new JsonResponse([
+        return $this->json([
             'id' => $user->getId(),
             'firstname' => $user->getFirstname(),
             'lastname' => $user->getLastname(),
@@ -37,11 +37,12 @@ class UserController extends AbstractController
     }
 
     #[Route('/update', name: 'update_profile', methods: ['PUT'])]
+    #[IsGranted('ROLE_USER')]
     public function updateProfile(Request $request, EntityManagerInterface $entityManager, Security $security): JsonResponse
     {
         $user = $security->getUser();
 
-        if (!$user) {
+        if (!$user instanceof Users) {
             return new JsonResponse(['error' => 'Utilisateur non authentifié'], JsonResponse::HTTP_UNAUTHORIZED);
         }
 
@@ -62,6 +63,8 @@ class UserController extends AbstractController
         if (isset($data['avatar'])) {
             $user->setAvatar($data['avatar']);
         }
+
+        $user->setUpdatedAt(new \DateTimeImmutable());
 
         $entityManager->persist($user);
         $entityManager->flush();
