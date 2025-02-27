@@ -7,14 +7,18 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Ramsey\Uuid\Uuid;
+use Ramsey\Uuid\Doctrine\UuidGenerator;
 
 #[ORM\Entity(repositoryClass: ServiceRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 class Service
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: "integer")]
-    private ?int $id = null;
+    #[ORM\Column(type: "uuid", unique: true)]
+    #[ORM\GeneratedValue(strategy: "CUSTOM")]
+    #[ORM\CustomIdGenerator(class: UuidGenerator::class)]
+    private ?string $id = null;
 
     #[ORM\Column(length: 255)]
     private ?string $name = null;
@@ -32,26 +36,35 @@ class Service
     private ?string $website = null;
 
     #[ORM\ManyToOne(targetEntity: Category::class, inversedBy: "services")]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: true)]  // Modifier en fonction des règles métier
     private ?Category $category = null;
 
-    #[ORM\OneToMany(mappedBy: "service", targetEntity: Subscription::class)]
+    #[ORM\OneToMany(mappedBy: "service", targetEntity: Subscription::class, cascade: ["persist", "remove"])]
     private Collection $subscriptions;
 
     #[ORM\Column]
     private ?\DateTimeImmutable $created_at = null;
 
-    #[ORM\Column(type: Types::BIGINT)]
-    private ?string $updated_at = null;
+    #[ORM\Column]
+    private ?\DateTimeImmutable $updated_at = null;
 
     public function __construct()
     {
+        $now = new \DateTimeImmutable();
+        $this->created_at = $now;
+        $this->updated_at = $now;
         $this->subscriptions = new ArrayCollection();
     }
 
-    public function getId(): ?int
+    #[ORM\PreUpdate]
+    public function updateTimestamps(): void
     {
-        return $this->id;
+        $this->updated_at = new \DateTimeImmutable();
+    }
+
+    public function getId(): ?string
+    {
+        return $this->id ? $this->id : null;
     }
 
     public function getName(): ?string
@@ -120,25 +133,37 @@ class Service
         return $this;
     }
 
+    public function getSubscriptions(): Collection
+    {
+        return $this->subscriptions;
+    }
+
+    public function addSubscription(Subscription $subscription): static
+    {
+        if (!$this->subscriptions->contains($subscription)) {
+            $this->subscriptions->add($subscription);
+            $subscription->setService($this);
+        }
+        return $this;
+    }
+
+    public function removeSubscription(Subscription $subscription): static
+    {
+        if ($this->subscriptions->removeElement($subscription)) {
+            if ($subscription->getService() === $this) {
+                $subscription->setService(null);
+            }
+        }
+        return $this;
+    }
+
     public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->created_at;
     }
 
-    public function setCreatedAt(\DateTimeImmutable $created_at): static
-    {
-        $this->created_at = $created_at;
-        return $this;
-    }
-
-    public function getUpdatedAt(): ?string
+    public function getUpdatedAt(): ?\DateTimeImmutable
     {
         return $this->updated_at;
-    }
-
-    public function setUpdatedAt(string $updated_at): static
-    {
-        $this->updated_at = $updated_at;
-        return $this;
     }
 }

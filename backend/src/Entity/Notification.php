@@ -7,14 +7,22 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Ramsey\Uuid\Uuid;
+use Ramsey\Uuid\Doctrine\UuidGenerator;
 
 #[ORM\Entity(repositoryClass: NotificationRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 class Notification
 {
+    public const TYPE_INFO = 'info';
+    public const TYPE_WARNING = 'warning';
+    public const TYPE_ERROR = 'error';
+
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: "integer")]
-    private ?int $id = null;
+    #[ORM\Column(type: "uuid", unique: true)]
+    #[ORM\GeneratedValue(strategy: "CUSTOM")]
+    #[ORM\CustomIdGenerator(class: UuidGenerator::class)]
+    private ?string $id = null;
 
     #[ORM\Column(length: 255)]
     private ?string $notification_type = null;
@@ -44,12 +52,22 @@ class Notification
 
     public function __construct()
     {
+        $now = new \DateTimeImmutable();
+        $this->created_at = $now;
+        $this->updated_at = $now;
+        $this->sent_at = $now;
         $this->notificationTargets = new ArrayCollection();
     }
 
-    public function getId(): ?int
+    #[ORM\PreUpdate]
+    public function updateTimestamps(): void
     {
-        return $this->id;
+        $this->updated_at = new \DateTimeImmutable();
+    }
+
+    public function getId(): ?string
+    {
+        return $this->id ? $this->id : null;
     }
 
     public function getNotificationType(): ?string
@@ -59,6 +77,9 @@ class Notification
 
     public function setNotificationType(string $notification_type): static
     {
+        if (!in_array($notification_type, [self::TYPE_INFO, self::TYPE_WARNING, self::TYPE_ERROR])) {
+            throw new \InvalidArgumentException("Type de notification invalide.");
+        }
         $this->notification_type = $notification_type;
         return $this;
     }
@@ -79,21 +100,15 @@ class Notification
         return $this->sent_at;
     }
 
-    public function setSentAt(\DateTimeImmutable $sent_at): static
+    public function markAsSent(): static
     {
-        $this->sent_at = $sent_at;
+        $this->sent_at = new \DateTimeImmutable();
         return $this;
     }
 
     public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->created_at;
-    }
-
-    public function setCreatedAt(\DateTimeImmutable $created_at): static
-    {
-        $this->created_at = $created_at;
-        return $this;
     }
 
     public function getSender(): ?Users
@@ -121,6 +136,11 @@ class Notification
     public function getUpdatedAt(): ?\DateTimeImmutable
     {
         return $this->updated_at;
+    }
+
+    public function getNotificationTargets(): Collection
+    {
+        return $this->notificationTargets;
     }
 
     public function setUpdatedAt(\DateTimeImmutable $updated_at): static

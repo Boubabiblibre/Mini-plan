@@ -7,14 +7,22 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Ramsey\Uuid\Uuid;
+use Ramsey\Uuid\Doctrine\UuidGenerator;
 
 #[ORM\Entity(repositoryClass: CategoryRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 class Category
 {
+    public const TYPE_EXPENSE = 'expense';
+    public const TYPE_INCOME = 'income';
+    public const TYPE_SAVINGS = 'savings';
+
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: "integer")]
-    private ?int $id = null;
+    #[ORM\Column(type: "uuid", unique: true)]
+    #[ORM\GeneratedValue(strategy: "CUSTOM")]
+    #[ORM\CustomIdGenerator(class: UuidGenerator::class)]
+    private ?string $id = null;
 
     #[ORM\Column(length: 255)]
     private ?string $name = null;
@@ -35,14 +43,29 @@ class Category
     #[ORM\OneToMany(mappedBy: "category", targetEntity: Service::class)]
     private Collection $services;
 
+    #[ORM\Column]
+    private ?\DateTimeImmutable $created_at = null;
+
+    #[ORM\Column]
+    private ?\DateTimeImmutable $updated_at = null;
+
     public function __construct()
     {
+        $now = new \DateTimeImmutable();
+        $this->created_at = $now;
+        $this->updated_at = $now;
         $this->services = new ArrayCollection();
     }
 
-    public function getId(): ?int
+    #[ORM\PreUpdate]
+    public function updateTimestamps(): void
     {
-        return $this->id;
+        $this->updated_at = new \DateTimeImmutable();
+    }
+
+    public function getId(): ?string
+    {
+        return $this->id ? $this->id : null;
     }
 
     public function getName(): ?string
@@ -74,6 +97,9 @@ class Category
 
     public function setColor(string $color): static
     {
+        if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $color)) {
+            throw new \InvalidArgumentException("Format de couleur invalide (ex: #FF5733).");
+        }
         $this->color = $color;
         return $this;
     }
@@ -85,6 +111,9 @@ class Category
 
     public function setType(string $type): static
     {
+        if (!in_array($type, [self::TYPE_EXPENSE, self::TYPE_INCOME, self::TYPE_SAVINGS])) {
+            throw new \InvalidArgumentException("Type de catégorie invalide.");
+        }
         $this->type = $type;
         return $this;
     }
@@ -103,5 +132,15 @@ class Category
     public function getServices(): Collection
     {
         return $this->services;
+    }
+
+    public function getCreatedAt(): ?\DateTimeImmutable
+    {
+        return $this->created_at;
+    }
+
+    public function getUpdatedAt(): ?\DateTimeImmutable
+    {
+        return $this->updated_at;
     }
 }

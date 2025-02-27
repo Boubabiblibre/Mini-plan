@@ -6,14 +6,23 @@ use App\Repository\MemberRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Ramsey\Uuid\Uuid;
+use Ramsey\Uuid\Doctrine\UuidGenerator;
 
 #[ORM\Entity(repositoryClass: MemberRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 class Member
 {
+    public const RELATION_PARENT = 'parent';
+    public const RELATION_CHILD = 'child';
+    public const RELATION_PARTNER = 'partner';
+    public const RELATION_OTHER = 'other';
+
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: "integer")]
-    private ?int $id = null;
+    #[ORM\Column(type: "uuid", unique: true)]
+    #[ORM\GeneratedValue(strategy: "CUSTOM")]
+    #[ORM\CustomIdGenerator(class: UuidGenerator::class)]
+    private ?string $id = null;
 
     #[ORM\Column(length: 255)]
     private ?string $name = null;
@@ -40,12 +49,21 @@ class Member
 
     public function __construct()
     {
+        $now = new \DateTimeImmutable();
+        $this->created_at = $now;
+        $this->updated_at = $now;
         $this->subscriptions = new ArrayCollection();
     }
 
-    public function getId(): ?int
+    #[ORM\PreUpdate]
+    public function updateTimestamps(): void
     {
-        return $this->id;
+        $this->updated_at = new \DateTimeImmutable();
+    }
+
+    public function getId(): ?string
+    {
+        return $this->id ? $this->id : null;
     }
 
     public function getName(): ?string
@@ -66,6 +84,14 @@ class Member
 
     public function setRelationship(?string $relationship): static
     {
+        if ($relationship !== null && !in_array($relationship, [
+            self::RELATION_PARENT, 
+            self::RELATION_CHILD, 
+            self::RELATION_PARTNER, 
+            self::RELATION_OTHER
+        ])) {
+            throw new \InvalidArgumentException("Relation invalide.");
+        }
         $this->relationship = $relationship;
         return $this;
     }
@@ -92,25 +118,37 @@ class Member
         return $this;
     }
 
+    public function getSubscriptions(): Collection
+    {
+        return $this->subscriptions;
+    }
+
+    public function addSubscription(Subscription $subscription): static
+    {
+        if (!$this->subscriptions->contains($subscription)) {
+            $this->subscriptions->add($subscription);
+            $subscription->setMember($this);
+        }
+        return $this;
+    }
+
+    public function removeSubscription(Subscription $subscription): static
+    {
+        if ($this->subscriptions->removeElement($subscription)) {
+            if ($subscription->getMember() === $this) {
+                $subscription->setMember(null);
+            }
+        }
+        return $this;
+    }
+
     public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->created_at;
     }
 
-    public function setCreatedAt(\DateTimeImmutable $created_at): static
-    {
-        $this->created_at = $created_at;
-        return $this;
-    }
-
     public function getUpdatedAt(): ?\DateTimeImmutable
     {
         return $this->updated_at;
-    }
-
-    public function setUpdatedAt(\DateTimeImmutable $updated_at): static
-    {
-        $this->updated_at = $updated_at;
-        return $this;
     }
 }

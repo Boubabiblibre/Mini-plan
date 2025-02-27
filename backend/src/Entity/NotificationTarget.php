@@ -4,14 +4,18 @@ namespace App\Entity;
 
 use App\Repository\NotificationTargetRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Ramsey\Uuid\Uuid;
+use Ramsey\Uuid\Doctrine\UuidGenerator;
 
 #[ORM\Entity(repositoryClass: NotificationTargetRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 class NotificationTarget
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: "integer")]
-    private ?int $id = null;
+    #[ORM\Column(type: "uuid", unique: true)]
+    #[ORM\GeneratedValue(strategy: "CUSTOM")]
+    #[ORM\CustomIdGenerator(class: UuidGenerator::class)]
+    private ?string $id = null;
 
     #[ORM\ManyToOne(targetEntity: Notification::class, inversedBy: "notificationTargets")]
     #[ORM\JoinColumn(nullable: false)]
@@ -30,9 +34,22 @@ class NotificationTarget
     #[ORM\Column]
     private ?\DateTimeImmutable $updated_at = null;
 
-    public function getId(): ?int
+    public function __construct()
     {
-        return $this->id;
+        $now = new \DateTimeImmutable();
+        $this->created_at = $now;
+        $this->updated_at = $now;
+    }
+
+    #[ORM\PreUpdate]
+    public function updateTimestamps(): void
+    {
+        $this->updated_at = new \DateTimeImmutable();
+    }
+
+    public function getId(): ?string
+    {
+        return $this->id ? $this->id : null;
     }
 
     public function getNotification(): ?Notification
@@ -68,15 +85,15 @@ class NotificationTarget
         return $this;
     }
 
+    public function markAsRead(): static
+    {
+        $this->read_at = new \DateTimeImmutable();
+        return $this;
+    }
+
     public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->created_at;
-    }
-
-    public function setCreatedAt(\DateTimeImmutable $created_at): static
-    {
-        $this->created_at = $created_at;
-        return $this;
     }
 
     public function getUpdatedAt(): ?\DateTimeImmutable

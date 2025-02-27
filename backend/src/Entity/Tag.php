@@ -7,14 +7,18 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\DBAL\Types\Types;
+use Ramsey\Uuid\Uuid;
+use Ramsey\Uuid\Doctrine\UuidGenerator;
 
 #[ORM\Entity(repositoryClass: TagRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 class Tag
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: "integer")]
-    private ?int $id = null;
+    #[ORM\Column(type: "uuid", unique: true)]
+    #[ORM\GeneratedValue(strategy: "CUSTOM")]
+    #[ORM\CustomIdGenerator(class: UuidGenerator::class)]
+    private ?string $id = null;
 
     #[ORM\Column(length: 255)]
     private ?string $name = null;
@@ -26,23 +30,32 @@ class Tag
     #[ORM\JoinColumn(nullable: false)]
     private ?Users $user = null;
 
-    #[ORM\OneToMany(mappedBy: "tag", targetEntity: SubscriptionTag::class)]
+    #[ORM\OneToMany(mappedBy: "tag", targetEntity: SubscriptionTag::class, cascade: ["persist", "remove"])]
     private Collection $subscriptionTags;
 
     #[ORM\Column]
     private ?\DateTimeImmutable $created_at = null;
 
     #[ORM\Column]
-    private ?\DateTimeImmutable $update_at = null;
+    private ?\DateTimeImmutable $updated_at = null;
 
     public function __construct()
     {
+        $now = new \DateTimeImmutable();
+        $this->created_at = $now;
+        $this->updated_at = $now;
         $this->subscriptionTags = new ArrayCollection();
     }
 
-    public function getId(): ?int
+    #[ORM\PreUpdate]
+    public function setUpdatedAtValue(): void
     {
-        return $this->id;
+        $this->updated_at = new \DateTimeImmutable();
+    }
+
+    public function getId(): ?string
+    {
+        return $this->id ? $this->id : null;
     }
 
     public function getName(): ?string
@@ -78,25 +91,37 @@ class Tag
         return $this;
     }
 
+    public function getSubscriptionTags(): Collection
+    {
+        return $this->subscriptionTags;
+    }
+
+    public function addSubscriptionTag(SubscriptionTag $subscriptionTag): static
+    {
+        if (!$this->subscriptionTags->contains($subscriptionTag)) {
+            $this->subscriptionTags->add($subscriptionTag);
+            $subscriptionTag->setTag($this);
+        }
+        return $this;
+    }
+
+    public function removeSubscriptionTag(SubscriptionTag $subscriptionTag): static
+    {
+        if ($this->subscriptionTags->removeElement($subscriptionTag)) {
+            if ($subscriptionTag->getTag() === $this) {
+                $subscriptionTag->setTag(null);
+            }
+        }
+        return $this;
+    }
+
     public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->created_at;
     }
 
-    public function setCreatedAt(\DateTimeImmutable $created_at): static
+    public function getUpdatedAt(): ?\DateTimeImmutable
     {
-        $this->created_at = $created_at;
-        return $this;
-    }
-
-    public function getUpdateAt(): ?\DateTimeImmutable
-    {
-        return $this->update_at;
-    }
-
-    public function setUpdateAt(\DateTimeImmutable $update_at): static
-    {
-        $this->update_at = $update_at;
-        return $this;
+        return $this->updated_at;
     }
 }

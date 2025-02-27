@@ -13,6 +13,7 @@ use Ramsey\Uuid\Doctrine\UuidGenerator;
 use Doctrine\DBAL\Types\Types;
 
 #[ORM\Entity(repositoryClass: UsersRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 class Users implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -45,8 +46,8 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: "text")]
     private ?string $password = null;
 
-    #[ORM\Column(nullable: true)]
-    private ?bool $is_active = null;
+    #[ORM\Column(type: "boolean", options: ["default" => false])]
+    private ?bool $is_active = false;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
     private ?\DateTimeInterface $last_login = null;
@@ -60,19 +61,46 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(mappedBy: 'sender', targetEntity: Notification::class, orphanRemoval: true)]
     private Collection $notifications;
 
+    #[ORM\OneToMany(mappedBy: "user", targetEntity: Category::class)]
+    private Collection $categories;
+
+    #[ORM\OneToMany(mappedBy: "user", targetEntity: NotificationTarget::class)]
+    private Collection $notificationTargets;
+
+    #[ORM\OneToMany(mappedBy: "user", targetEntity: Permission::class)]
+    private Collection $permissions;
+
+    #[ORM\OneToMany(mappedBy: "user", targetEntity: Member::class)]
+    private Collection $members;
+
+    #[ORM\OneToMany(mappedBy: "user", targetEntity: Tag::class)]
+    private Collection $tags;
+
     #[ORM\Column(type: "json")]
     private array $roles = [];
 
     public function __construct()
     {
-        $this->created_at = new \DateTimeImmutable();
-        $this->updated_at = new \DateTimeImmutable();
+        $now = new \DateTimeImmutable();
+        $this->created_at = $now;
+        $this->updated_at = $now;
         $this->notifications = new ArrayCollection();
+        $this->categories = new ArrayCollection();
+        $this->notificationTargets = new ArrayCollection();
+        $this->permissions = new ArrayCollection();
+        $this->members = new ArrayCollection();
+        $this->tags = new ArrayCollection();
+    }
+
+    #[ORM\PreUpdate]
+    public function setUpdatedAtValue(): void
+    {
+        $this->updated_at = new \DateTimeImmutable();
     }
 
     public function getId(): ?string
     {
-        return $this->id;
+        return $this->id ? $this->id : null;
     }
 
     public function getLastname(): ?string
@@ -121,14 +149,11 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getRoles(): array
     {
-        // if (empty($this->roles)) {
-        //     $this->roles = ['ROLE_USER'];
-        // }
         $roles = $this->roles;
         if (!in_array('ROLE_USER', $roles, true)) {
             $roles[] = 'ROLE_USER';
         }
-        return $this->roles;
+        return $roles;
     }
 
     public function setRoles(array $roles): self
@@ -211,15 +236,44 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->created_at;
     }
 
+    public function getUpdatedAt(): ?\DateTimeImmutable
+    {
+        return $this->updated_at;
+    }
+
+    public function getNotifications(): Collection
+    {
+        return $this->notifications;
+    }
+
+    public function getCategories(): Collection
+    {
+        return $this->categories;
+    }
+
+    public function getNotificationTargets(): Collection
+    {
+        return $this->notificationTargets;
+    }
+
+    public function getPermissions(): Collection
+    {
+        return $this->permissions;
+    }
+
+    public function getMembers(): Collection
+    {
+        return $this->members;
+    }
+
+    public function getTags(): Collection
+    {
+        return $this->tags;
+    }
     public function setCreatedAt(\DateTimeImmutable $created_at): static
     {
         $this->created_at = $created_at;
         return $this;
-    }
-
-    public function getUpdatedAt(): ?\DateTimeImmutable
-    {
-        return $this->updated_at;
     }
 
     public function setUpdatedAt(\DateTimeImmutable $updated_at): static
@@ -228,14 +282,9 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getNotifications(): Collection
-    {
-        return $this->notifications;
-    }
-
     public function eraseCredentials(): void
     {
-        // Si l'entité stocke des données sensibles temporairement, on les supprime ici
+        // Suppression des données sensibles si nécessaire
     }
 
     public function getUserIdentifier(): string

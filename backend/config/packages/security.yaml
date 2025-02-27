@@ -1,3 +1,56 @@
+# security:
+#     password_hashers:
+#         App\Entity\Users:
+#             algorithm: auto
+
+#     providers:
+#         app_user_provider:
+#             entity:
+#                 class: App\Entity\Users
+#                 property: email
+
+#     firewalls:
+#         dev:
+#             pattern: ^/(_(profiler|wdt)|css|images|js)/
+#             security: false
+
+#         login:
+#             pattern: ^/login
+#             stateless: true
+#             json_login:
+#                 check_path: /login
+#                 username_path: email
+#                 password_path: password
+
+#         main:  # Ajout d'un firewall principal
+#             lazy: true
+#             provider: app_user_provider
+#             # user_checker: Symfony\Component\Security\Core\User\UserChecker
+#             stateless: true
+#             # jwt: ~
+#             security: false
+
+#         api:
+#             pattern: ^/
+#             stateless: true
+#             # jwt: ~
+#             security: false
+
+
+#     access_control:
+#         - { path: ^/login, roles: PUBLIC_ACCESS }
+#         - { path: ^/subscription, roles: IS_AUTHENTICATED_FULLY }  # Ajout pour protéger /subscription
+#         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
+
+# when@test:
+#     security:
+#         password_hashers:
+#             App\Entity\Users:
+#                 algorithm: auto
+#                 cost: 4  # Lowest possible value for bcrypt
+#                 time_cost: 3  # Lowest possible value for argon
+#                 memory_cost: 10  # Lowest possible value for argon
+
 security:
     password_hashers:
         App\Entity\Users:
@@ -22,28 +75,30 @@ security:
                 username_path: email
                 password_path: password
 
-        main:  # Ajout d'un firewall principal
+        main:
             lazy: true
             provider: app_user_provider
-            # user_checker: Symfony\Component\Security\Core\User\UserChecker
             stateless: true
-            jwt: ~
+            jwt: ~  # Activation du JWT
 
         api:
-            pattern: ^/
+            pattern: ^/api
             stateless: true
+            provider: app_user_provider
             jwt: ~
 
     access_control:
         - { path: ^/login, roles: PUBLIC_ACCESS }
-        - { path: ^/subscription, roles: IS_AUTHENTICATED_FULLY }  # Ajout pour protéger /subscription
-        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api/user/create, roles: PUBLIC_ACCESS } # 🚀 Permet de créer un utilisateur sans JWT
+        - { path: ^/api/doc, roles: PUBLIC_ACCESS } # ✅ Autorise l'accès à Swagger UI sans authentification
+        - { path: ^/api/subscription, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY } # Sécurise tous les autres endpoints API
 
 when@test:
     security:
         password_hashers:
             App\Entity\Users:
                 algorithm: auto
-                cost: 4  # Lowest possible value for bcrypt
-                time_cost: 3  # Lowest possible value for argon
-                memory_cost: 10  # Lowest possible value for argon
+                cost: 4
+                time_cost: 3
+                memory_cost: 10

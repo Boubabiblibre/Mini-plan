@@ -56,8 +56,10 @@ class LoginController extends AbstractController
                 'age' => $user->getAge(),
                 'avatar' => $user->getAvatar(),
                 'is_active' => $user->isActive(),
-                'created_at' => $user->getCreatedAt(),
-                'updated_at' => $user->getUpdatedAt()
+                // 'created_at' => $user->getCreatedAt(),
+                // 'updated_at' => $user->getUpdatedAt()
+                'created_at' => $user->getCreatedAt()->format('Y-m-d\TH:i:sP'), // ISO 8601
+                'updated_at' => $user->getUpdatedAt()->format('Y-m-d\TH:i:sP')  // ISO 8601
             ]
         ]);
     }
