@@ -22,7 +22,7 @@ const LoginStyles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 10,
     color: '#FFFFFF',
-    fontFamily: 'OutfitBold', // Police plus marquée pour le label
+    fontFamily: 'OutfitBold',
   },
   button: {
     marginTop: 20,

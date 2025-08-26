@@ -220,19 +220,20 @@
     </parameter>
     <parameter key="twig.default_path">C:\wamp64\www\Mini-Plan\backend/templates</parameter>
     <parameter key="nelmio_cors.map" type="collection">
-      <parameter key="^/" type="collection"/>
+      <parameter key="^/api/" type="collection"/>
     </parameter>
     <parameter key="nelmio_cors.defaults" type="collection">
-      <parameter key="allow_origin">true</parameter>
+      <parameter key="allow_origin" type="collection">
+        <parameter>http://localhost:8081</parameter>
+        <parameter>http://127.0.0.1:8081</parameter>
+      </parameter>
       <parameter key="allow_credentials">false</parameter>
       <parameter key="allow_headers" type="collection">
         <parameter>content-type</parameter>
         <parameter>authorization</parameter>
       </parameter>
       <parameter key="allow_private_network">false</parameter>
-      <parameter key="expose_headers" type="collection">
-        <parameter>Link</parameter>
-      </parameter>
+      <parameter key="expose_headers" type="collection"/>
       <parameter key="allow_methods" type="collection">
         <parameter>GET</parameter>
         <parameter>OPTIONS</parameter>
@@ -243,7 +244,7 @@
       </parameter>
       <parameter key="max_age">3600</parameter>
       <parameter key="hosts" type="collection"/>
-      <parameter key="origin_regex">true</parameter>
+      <parameter key="origin_regex">false</parameter>
       <parameter key="forced_allow_origin_value">null</parameter>
       <parameter key="skip_same_as_origin">true</parameter>
     </parameter>
@@ -261,6 +262,17 @@
     <service id="App\Entity" class="App\Entity" abstract="true">
       <tag name="container.excluded" source="in &quot;config/services.yaml&quot;"/>
     </service>
+    <service id="App\Command\SeedServicesCommand" class="App\Command\SeedServicesCommand" autowire="true" autoconfigure="true">
+      <tag name="console.command"/>
+      <tag name="container.no_preload"/>
+      <argument type="service" id="doctrine.orm.default_entity_manager"/>
+      <call method="setName">
+        <argument>app:seed:services</argument>
+      </call>
+      <call method="setDescription">
+        <argument>Importe le catalogue des services depuis un JSON</argument>
+      </call>
+    </service>
     <service id="App\Controller\AuthController" class="App\Controller\AuthController" public="true" autowire="true" autoconfigure="true">
       <tag name="controller.service_arguments"/>
       <tag name="container.service_subscriber"/>
@@ -273,6 +285,13 @@
       <tag name="container.service_subscriber"/>
       <call method="setContainer">
         <argument type="service" id=".service_locator.ZyP9f7K.App\Controller\CategoryController"/>
+      </call>
+    </service>
+    <service id="App\Controller\InvitationController" class="App\Controller\InvitationController" public="true" autowire="true" autoconfigure="true">
+      <tag name="controller.service_arguments"/>
+      <tag name="container.service_subscriber"/>
+      <call method="setContainer">
+        <argument type="service" id=".service_locator.ZyP9f7K.App\Controller\InvitationController"/>
       </call>
     </service>
     <service id="App\Controller\MemberController" class="App\Controller\MemberController" public="true" autowire="true" autoconfigure="true">
@@ -349,6 +368,10 @@
       <tag name="doctrine.repository_service"/>
       <argument type="service" id="doctrine"/>
     </service>
+    <service id="App\Repository\InvitationRepository" class="App\Repository\InvitationRepository" autowire="true" autoconfigure="true">
+      <tag name="doctrine.repository_service"/>
+      <argument type="service" id="doctrine"/>
+    </service>
     <service id="App\Repository\MemberRepository" class="App\Repository\MemberRepository" autowire="true" autoconfigure="true">
       <tag name="doctrine.repository_service"/>
       <argument type="service" id="doctrine"/>
@@ -416,7 +439,7 @@
     </service>
     <service id="argument_resolver.service" class="Symfony\Component\HttpKernel\Controller\ArgumentResolver\ServiceValueResolver">
       <tag priority="-50" name="Symfony\Component\HttpKernel\Controller\ArgumentResolver\ServiceValueResolver">controller.argument_value_resolver</tag>
-      <argument type="service" id=".service_locator.zKA3mBQ"/>
+      <argument type="service" id=".service_locator.KGU.Y57"/>
     </service>
     <service id="argument_resolver.default" class="Symfony\Component\HttpKernel\Controller\ArgumentResolver\DefaultValueResolver">
       <tag priority="-100" name="Symfony\Component\HttpKernel\Controller\ArgumentResolver\DefaultValueResolver">controller.argument_value_resolver</tag>
@@ -1723,7 +1746,7 @@
     </service>
     <service id="argument_resolver.not_tagged_controller" class="Symfony\Component\HttpKernel\Controller\ArgumentResolver\NotTaggedControllerValueResolver">
       <tag name="controller.argument_value_resolver" priority="-200"/>
-      <argument type="service" id=".service_locator.zKA3mBQ"/>
+      <argument type="service" id=".service_locator.KGU.Y57"/>
     </service>
     <service id="routing.resolver" class="Symfony\Component\Config\Loader\LoaderResolver">
       <call method="addLoader">
@@ -2822,7 +2845,7 @@
     <service id="doctrine.orm.configuration" class="Doctrine\ORM\Configuration" abstract="true"/>
     <service id="doctrine.orm.entity_manager.abstract" class="Doctrine\ORM\EntityManager" lazy="true" abstract="true"/>
     <service id="doctrine.orm.container_repository_factory" class="Doctrine\Bundle\DoctrineBundle\Repository\ContainerRepositoryFactory">
-      <argument type="service" id=".service_locator.ap3OnYo"/>
+      <argument type="service" id=".service_locator.hotvx8V"/>
     </service>
     <service id="doctrine.orm.manager_configurator.abstract" class="Doctrine\Bundle\DoctrineBundle\ManagerConfigurator" abstract="true">
       <argument type="collection"/>
@@ -3627,70 +3650,7 @@
         <argument>null</argument>
       </call>
       <call method="add">
-        <argument type="service" id=".security.request_matcher.vvGjlIs"/>
-        <argument type="collection">
-          <argument>IS_AUTHENTICATED_FULLY</argument>
-        </argument>
-        <argument>null</argument>
-      </call>
-      <call method="add">
-        <argument type="service" id=".security.request_matcher.j9XeubC"/>
-        <argument type="collection">
-          <argument>IS_AUTHENTICATED_FULLY</argument>
-        </argument>
-        <argument>null</argument>
-      </call>
-      <call method="add">
-        <argument type="service" id=".security.request_matcher.TyVm90Z"/>
-        <argument type="collection">
-          <argument>IS_AUTHENTICATED_FULLY</argument>
-        </argument>
-        <argument>null</argument>
-      </call>
-      <call method="add">
-        <argument type="service" id=".security.request_matcher.sDdt6Tf"/>
-        <argument type="collection">
-          <argument>IS_AUTHENTICATED_FULLY</argument>
-        </argument>
-        <argument>null</argument>
-      </call>
-      <call method="add">
-        <argument type="service" id=".security.request_matcher.tEdGnVk"/>
-        <argument type="collection">
-          <argument>IS_AUTHENTICATED_FULLY</argument>
-        </argument>
-        <argument>null</argument>
-      </call>
-      <call method="add">
-        <argument type="service" id=".security.request_matcher.d3Pa7rf"/>
-        <argument type="collection">
-          <argument>IS_AUTHENTICATED_FULLY</argument>
-        </argument>
-        <argument>null</argument>
-      </call>
-      <call method="add">
-        <argument type="service" id=".security.request_matcher.yQ.2g3t"/>
-        <argument type="collection">
-          <argument>IS_AUTHENTICATED_FULLY</argument>
-        </argument>
-        <argument>null</argument>
-      </call>
-      <call method="add">
-        <argument type="service" id=".security.request_matcher.x3bsFGB"/>
-        <argument type="collection">
-          <argument>IS_AUTHENTICATED_FULLY</argument>
-        </argument>
-        <argument>null</argument>
-      </call>
-      <call method="add">
-        <argument type="service" id=".security.request_matcher.DkdhNgZ"/>
-        <argument type="collection">
-          <argument>IS_AUTHENTICATED_FULLY</argument>
-        </argument>
-        <argument>null</argument>
-      </call>
-      <call method="add">
-        <argument type="service" id=".security.request_matcher.jL_yCyE"/>
+        <argument type="service" id=".security.request_matcher..wQc8iN"/>
         <argument type="collection">
           <argument>IS_AUTHENTICATED_FULLY</argument>
         </argument>
@@ -4418,84 +4378,12 @@
         <argument type="service" id=".security.request_matcher.1qUF2SK"/>
       </argument>
     </service>
-    <service id=".security.request_matcher.etKHTsh" class="Symfony\Component\HttpFoundation\RequestMatcher\PathRequestMatcher">
-      <argument>^/api/permission/user</argument>
+    <service id=".security.request_matcher.wWq2pT_" class="Symfony\Component\HttpFoundation\RequestMatcher\PathRequestMatcher">
+      <argument>^/api/invite/\d+/(accept|decline)$</argument>
     </service>
-    <service id=".security.request_matcher.vvGjlIs" class="Symfony\Component\HttpFoundation\ChainRequestMatcher">
+    <service id=".security.request_matcher..wQc8iN" class="Symfony\Component\HttpFoundation\ChainRequestMatcher">
       <argument type="collection">
-        <argument type="service" id=".security.request_matcher.etKHTsh"/>
-      </argument>
-    </service>
-    <service id=".security.request_matcher.7VGf4Yd" class="Symfony\Component\HttpFoundation\RequestMatcher\PathRequestMatcher">
-      <argument>^/api/user</argument>
-    </service>
-    <service id=".security.request_matcher.j9XeubC" class="Symfony\Component\HttpFoundation\ChainRequestMatcher">
-      <argument type="collection">
-        <argument type="service" id=".security.request_matcher.7VGf4Yd"/>
-      </argument>
-    </service>
-    <service id=".security.request_matcher.17XFf_d" class="Symfony\Component\HttpFoundation\RequestMatcher\PathRequestMatcher">
-      <argument>^/api/member</argument>
-    </service>
-    <service id=".security.request_matcher.TyVm90Z" class="Symfony\Component\HttpFoundation\ChainRequestMatcher">
-      <argument type="collection">
-        <argument type="service" id=".security.request_matcher.17XFf_d"/>
-      </argument>
-    </service>
-    <service id=".security.request_matcher.7rCkkYY" class="Symfony\Component\HttpFoundation\RequestMatcher\PathRequestMatcher">
-      <argument>^/api/subscription</argument>
-    </service>
-    <service id=".security.request_matcher.sDdt6Tf" class="Symfony\Component\HttpFoundation\ChainRequestMatcher">
-      <argument type="collection">
-        <argument type="service" id=".security.request_matcher.7rCkkYY"/>
-      </argument>
-    </service>
-    <service id=".security.request_matcher.6G9M52Q" class="Symfony\Component\HttpFoundation\RequestMatcher\PathRequestMatcher">
-      <argument>^/api/subscription-tag</argument>
-    </service>
-    <service id=".security.request_matcher.tEdGnVk" class="Symfony\Component\HttpFoundation\ChainRequestMatcher">
-      <argument type="collection">
-        <argument type="service" id=".security.request_matcher.6G9M52Q"/>
-      </argument>
-    </service>
-    <service id=".security.request_matcher.v0v69Wf" class="Symfony\Component\HttpFoundation\RequestMatcher\PathRequestMatcher">
-      <argument>^/api/tag</argument>
-    </service>
-    <service id=".security.request_matcher.d3Pa7rf" class="Symfony\Component\HttpFoundation\ChainRequestMatcher">
-      <argument type="collection">
-        <argument type="service" id=".security.request_matcher.v0v69Wf"/>
-      </argument>
-    </service>
-    <service id=".security.request_matcher.LG2qa_l" class="Symfony\Component\HttpFoundation\RequestMatcher\PathRequestMatcher">
-      <argument>^/api/service</argument>
-    </service>
-    <service id=".security.request_matcher.yQ.2g3t" class="Symfony\Component\HttpFoundation\ChainRequestMatcher">
-      <argument type="collection">
-        <argument type="service" id=".security.request_matcher.LG2qa_l"/>
-      </argument>
-    </service>
-    <service id=".security.request_matcher.9Ynhj5r" class="Symfony\Component\HttpFoundation\RequestMatcher\PathRequestMatcher">
-      <argument>^/api/payment</argument>
-    </service>
-    <service id=".security.request_matcher.x3bsFGB" class="Symfony\Component\HttpFoundation\ChainRequestMatcher">
-      <argument type="collection">
-        <argument type="service" id=".security.request_matcher.9Ynhj5r"/>
-      </argument>
-    </service>
-    <service id=".security.request_matcher.FF0Badh" class="Symfony\Component\HttpFoundation\RequestMatcher\PathRequestMatcher">
-      <argument>^/api/category</argument>
-    </service>
-    <service id=".security.request_matcher.DkdhNgZ" class="Symfony\Component\HttpFoundation\ChainRequestMatcher">
-      <argument type="collection">
-        <argument type="service" id=".security.request_matcher.FF0Badh"/>
-      </argument>
-    </service>
-    <service id=".security.request_matcher.qmNCoa1" class="Symfony\Component\HttpFoundation\RequestMatcher\PathRequestMatcher">
-      <argument>^/api/notification</argument>
-    </service>
-    <service id=".security.request_matcher.jL_yCyE" class="Symfony\Component\HttpFoundation\ChainRequestMatcher">
-      <argument type="collection">
-        <argument type="service" id=".security.request_matcher.qmNCoa1"/>
+        <argument type="service" id=".security.request_matcher.wWq2pT_"/>
       </argument>
     </service>
     <service id=".security.request_matcher.0tMb.ud" class="Symfony\Component\HttpFoundation\ChainRequestMatcher">
@@ -5229,12 +5117,17 @@
       <tag name="kernel.event_listener" event="kernel.response" method="onResponse" priority="-10"/>
       <tag name="container.hot_path"/>
     </service>
+    <service id=".instanceof.Symfony\Component\Console\Command\Command.0.App\Command\SeedServicesCommand" class="App\Command\SeedServicesCommand" autowire="true" abstract="true"/>
+    <service id=".abstract.instanceof.App\Command\SeedServicesCommand" class="App\Command\SeedServicesCommand" autowire="true" autoconfigure="true" abstract="true"/>
     <service id=".instanceof.Symfony\Contracts\Service\ServiceSubscriberInterface.0.App\Controller\AuthController" class="App\Controller\AuthController" autowire="true" abstract="true"/>
     <service id=".instanceof.Symfony\Bundle\FrameworkBundle\Controller\AbstractController.0.App\Controller\AuthController" class="App\Controller\AuthController" autowire="true" abstract="true"/>
     <service id=".abstract.instanceof.App\Controller\AuthController" class="App\Controller\AuthController" autowire="true" autoconfigure="true" abstract="true"/>
     <service id=".instanceof.Symfony\Contracts\Service\ServiceSubscriberInterface.0.App\Controller\CategoryController" class="App\Controller\CategoryController" autowire="true" abstract="true"/>
     <service id=".instanceof.Symfony\Bundle\FrameworkBundle\Controller\AbstractController.0.App\Controller\CategoryController" class="App\Controller\CategoryController" autowire="true" abstract="true"/>
     <service id=".abstract.instanceof.App\Controller\CategoryController" class="App\Controller\CategoryController" autowire="true" autoconfigure="true" abstract="true"/>
+    <service id=".instanceof.Symfony\Contracts\Service\ServiceSubscriberInterface.0.App\Controller\InvitationController" class="App\Controller\InvitationController" autowire="true" abstract="true"/>
+    <service id=".instanceof.Symfony\Bundle\FrameworkBundle\Controller\AbstractController.0.App\Controller\InvitationController" class="App\Controller\InvitationController" autowire="true" abstract="true"/>
+    <service id=".abstract.instanceof.App\Controller\InvitationController" class="App\Controller\InvitationController" autowire="true" autoconfigure="true" abstract="true"/>
     <service id=".instanceof.Symfony\Contracts\Service\ServiceSubscriberInterface.0.App\Controller\MemberController" class="App\Controller\MemberController" autowire="true" abstract="true"/>
     <service id=".instanceof.Symfony\Bundle\FrameworkBundle\Controller\AbstractController.0.App\Controller\MemberController" class="App\Controller\MemberController" autowire="true" abstract="true"/>
     <service id=".abstract.instanceof.App\Controller\MemberController" class="App\Controller\MemberController" autowire="true" autoconfigure="true" abstract="true"/>
@@ -5267,6 +5160,8 @@
     <service id=".abstract.instanceof.App\Controller\UserController" class="App\Controller\UserController" autowire="true" autoconfigure="true" abstract="true"/>
     <service id=".instanceof.Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepositoryInterface.0.App\Repository\CategoryRepository" class="App\Repository\CategoryRepository" autowire="true" abstract="true"/>
     <service id=".abstract.instanceof.App\Repository\CategoryRepository" class="App\Repository\CategoryRepository" autowire="true" autoconfigure="true" abstract="true"/>
+    <service id=".instanceof.Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepositoryInterface.0.App\Repository\InvitationRepository" class="App\Repository\InvitationRepository" autowire="true" abstract="true"/>
+    <service id=".abstract.instanceof.App\Repository\InvitationRepository" class="App\Repository\InvitationRepository" autowire="true" autoconfigure="true" abstract="true"/>
     <service id=".instanceof.Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepositoryInterface.0.App\Repository\MemberRepository" class="App\Repository\MemberRepository" autowire="true" abstract="true"/>
     <service id=".abstract.instanceof.App\Repository\MemberRepository" class="App\Repository\MemberRepository" autowire="true" autoconfigure="true" abstract="true"/>
     <service id=".instanceof.Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepositoryInterface.0.App\Repository\NotificationRepository" class="App\Repository\NotificationRepository" autowire="true" abstract="true"/>
@@ -5930,23 +5825,114 @@
       <argument type="service" id="service_container"/>
       <factory service=".service_locator.HQ.7fB5" method="withContext"/>
     </service>
-    <service id=".service_locator.Pvsz2ki.App\Controller\MemberController::createMember()" class="Symfony\Component\DependencyInjection\ServiceLocator">
-      <tag name="container.service_locator_context" id="App\Controller\MemberController::createMember()"/>
-      <argument>App\Controller\MemberController::createMember()</argument>
+    <service id=".service_locator.wuMwtd9" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator"/>
+      <argument type="collection">
+        <argument key="spaces" type="service_closure" id="App\Repository\SpaceRepository"/>
+        <argument key="repo" type="service_closure" id="App\Repository\InvitationRepository"/>
+      </argument>
+    </service>
+    <service id=".service_locator.wuMwtd9.App\Controller\InvitationController::all()" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator_context" id="App\Controller\InvitationController::all()"/>
+      <argument>App\Controller\InvitationController::all()</argument>
       <argument type="service" id="service_container"/>
-      <factory service=".service_locator.Pvsz2ki" method="withContext"/>
+      <factory service=".service_locator.wuMwtd9" method="withContext"/>
+    </service>
+    <service id=".service_locator.4zjgymT" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator"/>
+      <argument type="collection">
+        <argument key="repo" type="service_closure" id="App\Repository\InvitationRepository"/>
+        <argument key="spaces" type="service_closure" id="App\Repository\SpaceRepository"/>
+      </argument>
+    </service>
+    <service id=".service_locator.4zjgymT.App\Controller\InvitationController::mine()" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator_context" id="App\Controller\InvitationController::mine()"/>
+      <argument>App\Controller\InvitationController::mine()</argument>
+      <argument type="service" id="service_container"/>
+      <factory service=".service_locator.4zjgymT" method="withContext"/>
+    </service>
+    <service id=".service_locator.Ay5VEzj" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator"/>
+      <argument type="collection">
+        <argument key="repo" type="service_closure" id="App\Repository\InvitationRepository"/>
+        <argument key="em" type="service_closure" id="doctrine.orm.default_entity_manager"/>
+      </argument>
+    </service>
+    <service id=".service_locator.Ay5VEzj.App\Controller\InvitationController::delete()" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator_context" id="App\Controller\InvitationController::delete()"/>
+      <argument>App\Controller\InvitationController::delete()</argument>
+      <argument type="service" id="service_container"/>
+      <factory service=".service_locator.Ay5VEzj" method="withContext"/>
+    </service>
+    <service id=".errored.rLfsexr" class="App\Controller\Security">
+      <tag name="container.error" message="Cannot determine controller argument for &quot;App\Controller\InvitationController::acceptById()&quot;: the $security argument is type-hinted with the non-existent class or interface: &quot;App\Controller\Security&quot;. Did you forget to add a use statement?"/>
+    </service>
+    <service id=".service_locator.4dyYeMM" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator"/>
+      <argument type="collection">
+        <argument key="repo" type="service_closure" id="App\Repository\InvitationRepository"/>
+        <argument key="members" type="service_closure" id="App\Repository\MemberRepository"/>
+        <argument key="security" type="service_closure" id=".errored.rLfsexr"/>
+        <argument key="em" type="service_closure" id="doctrine.orm.default_entity_manager"/>
+      </argument>
+    </service>
+    <service id=".service_locator.4dyYeMM.App\Controller\InvitationController::acceptById()" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator_context" id="App\Controller\InvitationController::acceptById()"/>
+      <argument>App\Controller\InvitationController::acceptById()</argument>
+      <argument type="service" id="service_container"/>
+      <factory service=".service_locator.4dyYeMM" method="withContext"/>
+    </service>
+    <service id=".errored.miYaXxo" class="App\Controller\Security">
+      <tag name="container.error" message="Cannot determine controller argument for &quot;App\Controller\InvitationController::declineById()&quot;: the $security argument is type-hinted with the non-existent class or interface: &quot;App\Controller\Security&quot;. Did you forget to add a use statement?"/>
+    </service>
+    <service id=".service_locator.TSSemBD" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator"/>
+      <argument type="collection">
+        <argument key="repo" type="service_closure" id="App\Repository\InvitationRepository"/>
+        <argument key="security" type="service_closure" id=".errored.miYaXxo"/>
+        <argument key="em" type="service_closure" id="doctrine.orm.default_entity_manager"/>
+      </argument>
+    </service>
+    <service id=".service_locator.TSSemBD.App\Controller\InvitationController::declineById()" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator_context" id="App\Controller\InvitationController::declineById()"/>
+      <argument>App\Controller\InvitationController::declineById()</argument>
+      <argument type="service" id="service_container"/>
+      <factory service=".service_locator.TSSemBD" method="withContext"/>
+    </service>
+    <service id=".service_locator.yN.__eu" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator"/>
+      <argument type="collection">
+        <argument key="spaces" type="service_closure" id="App\Repository\SpaceRepository"/>
+        <argument key="users" type="service_closure" id="App\Repository\UserRepository"/>
+        <argument key="members" type="service_closure" id="App\Repository\MemberRepository"/>
+        <argument key="invRepo" type="service_closure" id="App\Repository\InvitationRepository"/>
+        <argument key="em" type="service_closure" id="doctrine.orm.default_entity_manager"/>
+      </argument>
+    </service>
+    <service id=".service_locator.yN.__eu.App\Controller\MemberController::create()" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator_context" id="App\Controller\MemberController::create()"/>
+      <argument>App\Controller\MemberController::create()</argument>
+      <argument type="service" id="service_container"/>
+      <factory service=".service_locator.yN.__eu" method="withContext"/>
+    </service>
+    <service id=".service_locator.gDPr0i_" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator"/>
+      <argument type="collection">
+        <argument key="memberRepository" type="service_closure" id="App\Repository\MemberRepository"/>
+        <argument key="spaces" type="service_closure" id="App\Repository\SpaceRepository"/>
+      </argument>
+    </service>
+    <service id=".service_locator.gDPr0i_.App\Controller\MemberController::getAllMembers()" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator_context" id="App\Controller\MemberController::getAllMembers()"/>
+      <argument>App\Controller\MemberController::getAllMembers()</argument>
+      <argument type="service" id="service_container"/>
+      <factory service=".service_locator.gDPr0i_" method="withContext"/>
     </service>
     <service id=".service_locator.Zurzp9s" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator"/>
       <argument type="collection">
         <argument key="memberRepository" type="service_closure" id="App\Repository\MemberRepository"/>
       </argument>
-    </service>
-    <service id=".service_locator.Zurzp9s.App\Controller\MemberController::getAllMembers()" class="Symfony\Component\DependencyInjection\ServiceLocator">
-      <tag name="container.service_locator_context" id="App\Controller\MemberController::getAllMembers()"/>
-      <argument>App\Controller\MemberController::getAllMembers()</argument>
-      <argument type="service" id="service_container"/>
-      <factory service=".service_locator.Zurzp9s" method="withContext"/>
     </service>
     <service id=".service_locator.Zurzp9s.App\Controller\MemberController::getMemberById()" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator_context" id="App\Controller\MemberController::getMemberById()"/>
@@ -5980,6 +5966,38 @@
       <argument>App\Controller\MemberController::deleteMember()</argument>
       <argument type="service" id="service_container"/>
       <factory service=".service_locator.MMjNq0W" method="withContext"/>
+    </service>
+    <service id=".service_locator.z01bFfT" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator"/>
+      <argument type="collection">
+        <argument key="invRepo" type="service_closure" id="App\Repository\InvitationRepository"/>
+        <argument key="spaces" type="service_closure" id="App\Repository\SpaceRepository"/>
+      </argument>
+    </service>
+    <service id=".service_locator.z01bFfT.App\Controller\MemberController::invitationsBySpace()" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator_context" id="App\Controller\MemberController::invitationsBySpace()"/>
+      <argument>App\Controller\MemberController::invitationsBySpace()</argument>
+      <argument type="service" id="service_container"/>
+      <factory service=".service_locator.z01bFfT" method="withContext"/>
+    </service>
+    <service id=".service_locator.s6rIcWw" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator"/>
+      <argument type="collection">
+        <argument key="invRepo" type="service_closure" id="App\Repository\InvitationRepository"/>
+        <argument key="em" type="service_closure" id="doctrine.orm.default_entity_manager"/>
+      </argument>
+    </service>
+    <service id=".service_locator.s6rIcWw.App\Controller\MemberController::cancelInvitation()" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator_context" id="App\Controller\MemberController::cancelInvitation()"/>
+      <argument>App\Controller\MemberController::cancelInvitation()</argument>
+      <argument type="service" id="service_container"/>
+      <factory service=".service_locator.s6rIcWw" method="withContext"/>
+    </service>
+    <service id=".service_locator.s6rIcWw.App\Controller\MemberController::resendInvitation()" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator_context" id="App\Controller\MemberController::resendInvitation()"/>
+      <argument>App\Controller\MemberController::resendInvitation()</argument>
+      <argument type="service" id="service_container"/>
+      <factory service=".service_locator.s6rIcWw" method="withContext"/>
     </service>
     <service id=".service_locator.Pvsz2ki.App\Controller\NotificationController::createNotification()" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator_context" id="App\Controller\NotificationController::createNotification()"/>
@@ -6165,23 +6183,36 @@
       <argument type="service" id="service_container"/>
       <factory service=".service_locator.Nxw1N6." method="withContext"/>
     </service>
-    <service id=".service_locator.Pvsz2ki.App\Controller\SpaceController::createSpace()" class="Symfony\Component\DependencyInjection\ServiceLocator">
+    <service id=".service_locator.AJ5eq3c" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator"/>
+      <argument type="collection">
+        <argument key="em" type="service_closure" id="doctrine.orm.default_entity_manager"/>
+        <argument key="validator" type="service_closure" id="validator"/>
+      </argument>
+    </service>
+    <service id=".service_locator.AJ5eq3c.App\Controller\SpaceController::createSpace()" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator_context" id="App\Controller\SpaceController::createSpace()"/>
       <argument>App\Controller\SpaceController::createSpace()</argument>
       <argument type="service" id="service_container"/>
-      <factory service=".service_locator.Pvsz2ki" method="withContext"/>
+      <factory service=".service_locator.AJ5eq3c" method="withContext"/>
+    </service>
+    <service id=".service_locator.Kq27LHM" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator"/>
+      <argument type="collection">
+        <argument key="em" type="service_closure" id="doctrine.orm.default_entity_manager"/>
+      </argument>
+    </service>
+    <service id=".service_locator.Kq27LHM.App\Controller\SpaceController::getAllSpaces()" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator_context" id="App\Controller\SpaceController::getAllSpaces()"/>
+      <argument>App\Controller\SpaceController::getAllSpaces()</argument>
+      <argument type="service" id="service_container"/>
+      <factory service=".service_locator.Kq27LHM" method="withContext"/>
     </service>
     <service id=".service_locator.L7r55b7" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator"/>
       <argument type="collection">
         <argument key="spaceRepository" type="service_closure" id="App\Repository\SpaceRepository"/>
       </argument>
-    </service>
-    <service id=".service_locator.L7r55b7.App\Controller\SpaceController::getAllSpaces()" class="Symfony\Component\DependencyInjection\ServiceLocator">
-      <tag name="container.service_locator_context" id="App\Controller\SpaceController::getAllSpaces()"/>
-      <argument>App\Controller\SpaceController::getAllSpaces()</argument>
-      <argument type="service" id="service_container"/>
-      <factory service=".service_locator.L7r55b7" method="withContext"/>
     </service>
     <service id=".service_locator.L7r55b7.App\Controller\SpaceController::getSpaceById()" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator_context" id="App\Controller\SpaceController::getSpaceById()"/>
@@ -6208,29 +6239,49 @@
       <argument type="service" id="service_container"/>
       <factory service=".service_locator.5DPVkPI" method="withContext"/>
     </service>
-    <service id=".service_locator.M6r5JUz.App\Controller\SubscriptionController::createSubscription()" class="Symfony\Component\DependencyInjection\ServiceLocator">
+    <service id=".service_locator.gdjgS5B" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator"/>
+      <argument type="collection">
+        <argument key="em" type="service_closure" id="doctrine.orm.default_entity_manager"/>
+        <argument key="validator" type="service_closure" id="validator"/>
+        <argument key="logger" type="service_closure" id="logger"/>
+      </argument>
+    </service>
+    <service id=".service_locator.gdjgS5B.App\Controller\SubscriptionController::createSubscription()" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator_context" id="App\Controller\SubscriptionController::createSubscription()"/>
       <argument>App\Controller\SubscriptionController::createSubscription()</argument>
       <argument type="service" id="service_container"/>
-      <factory service=".service_locator.M6r5JUz" method="withContext"/>
+      <factory service=".service_locator.gdjgS5B" method="withContext"/>
     </service>
-    <service id=".service_locator.egipcEH.App\Controller\SubscriptionController::getAllSubscriptions()" class="Symfony\Component\DependencyInjection\ServiceLocator">
+    <service id=".service_locator.Kq27LHM.App\Controller\SubscriptionController::getAllSubscriptions()" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator_context" id="App\Controller\SubscriptionController::getAllSubscriptions()"/>
       <argument>App\Controller\SubscriptionController::getAllSubscriptions()</argument>
       <argument type="service" id="service_container"/>
-      <factory service=".service_locator.egipcEH" method="withContext"/>
+      <factory service=".service_locator.Kq27LHM" method="withContext"/>
     </service>
-    <service id=".service_locator.egipcEH.App\Controller\SubscriptionController::updateSubscription()" class="Symfony\Component\DependencyInjection\ServiceLocator">
+    <service id=".service_locator.Kq27LHM.App\Controller\SubscriptionController::updateSubscription()" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator_context" id="App\Controller\SubscriptionController::updateSubscription()"/>
       <argument>App\Controller\SubscriptionController::updateSubscription()</argument>
       <argument type="service" id="service_container"/>
-      <factory service=".service_locator.egipcEH" method="withContext"/>
+      <factory service=".service_locator.Kq27LHM" method="withContext"/>
     </service>
-    <service id=".service_locator.egipcEH.App\Controller\SubscriptionController::deleteSubscription()" class="Symfony\Component\DependencyInjection\ServiceLocator">
+    <service id=".service_locator.Kq27LHM.App\Controller\SubscriptionController::deleteSubscription()" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator_context" id="App\Controller\SubscriptionController::deleteSubscription()"/>
       <argument>App\Controller\SubscriptionController::deleteSubscription()</argument>
       <argument type="service" id="service_container"/>
-      <factory service=".service_locator.egipcEH" method="withContext"/>
+      <factory service=".service_locator.Kq27LHM" method="withContext"/>
+    </service>
+    <service id=".service_locator.Kq27LHM.App\Controller\SubscriptionController::getMySubscriptions()" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator_context" id="App\Controller\SubscriptionController::getMySubscriptions()"/>
+      <argument>App\Controller\SubscriptionController::getMySubscriptions()</argument>
+      <argument type="service" id="service_container"/>
+      <factory service=".service_locator.Kq27LHM" method="withContext"/>
+    </service>
+    <service id=".service_locator.Kq27LHM.App\Controller\SubscriptionController::cancelSubscription()" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator_context" id="App\Controller\SubscriptionController::cancelSubscription()"/>
+      <argument>App\Controller\SubscriptionController::cancelSubscription()</argument>
+      <argument type="service" id="service_container"/>
+      <factory service=".service_locator.Kq27LHM" method="withContext"/>
     </service>
     <service id=".service_locator.R0lEtSA.App\Controller\SubscriptionTagController::create()" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator_context" id="App\Controller\SubscriptionTagController::create()"/>
@@ -6334,12 +6385,6 @@
       <argument type="service" id="service_container"/>
       <factory service=".service_locator.R0lEtSA" method="withContext"/>
     </service>
-    <service id=".service_locator.Kq27LHM" class="Symfony\Component\DependencyInjection\ServiceLocator">
-      <tag name="container.service_locator"/>
-      <argument type="collection">
-        <argument key="em" type="service_closure" id="doctrine.orm.default_entity_manager"/>
-      </argument>
-    </service>
     <service id=".service_locator.Kq27LHM.App\Controller\UserController::promoteToAdmin()" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator_context" id="App\Controller\UserController::promoteToAdmin()"/>
       <argument>App\Controller\UserController::promoteToAdmin()</argument>
@@ -6352,7 +6397,7 @@
       <argument type="service" id="service_container"/>
       <factory service=".service_locator.Kq27LHM" method="withContext"/>
     </service>
-    <service id=".service_locator.zKA3mBQ" class="Symfony\Component\DependencyInjection\ServiceLocator">
+    <service id=".service_locator.KGU.Y57" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator"/>
       <argument type="collection">
         <argument key="kernel::registerContainerConfiguration" type="service_closure" id=".service_locator.zHyJIs5.kernel::registerContainerConfiguration()"/>
@@ -6365,11 +6410,19 @@
         <argument key="App\Controller\CategoryController::getCategoryById" type="service_closure" id=".service_locator.MTCWnA5.App\Controller\CategoryController::getCategoryById()"/>
         <argument key="App\Controller\CategoryController::updateCategory" type="service_closure" id=".service_locator.HQ.7fB5.App\Controller\CategoryController::updateCategory()"/>
         <argument key="App\Controller\CategoryController::deleteCategory" type="service_closure" id=".service_locator.HQ.7fB5.App\Controller\CategoryController::deleteCategory()"/>
-        <argument key="App\Controller\MemberController::createMember" type="service_closure" id=".service_locator.Pvsz2ki.App\Controller\MemberController::createMember()"/>
-        <argument key="App\Controller\MemberController::getAllMembers" type="service_closure" id=".service_locator.Zurzp9s.App\Controller\MemberController::getAllMembers()"/>
+        <argument key="App\Controller\InvitationController::all" type="service_closure" id=".service_locator.wuMwtd9.App\Controller\InvitationController::all()"/>
+        <argument key="App\Controller\InvitationController::mine" type="service_closure" id=".service_locator.4zjgymT.App\Controller\InvitationController::mine()"/>
+        <argument key="App\Controller\InvitationController::delete" type="service_closure" id=".service_locator.Ay5VEzj.App\Controller\InvitationController::delete()"/>
+        <argument key="App\Controller\InvitationController::acceptById" type="service_closure" id=".service_locator.4dyYeMM.App\Controller\InvitationController::acceptById()"/>
+        <argument key="App\Controller\InvitationController::declineById" type="service_closure" id=".service_locator.TSSemBD.App\Controller\InvitationController::declineById()"/>
+        <argument key="App\Controller\MemberController::create" type="service_closure" id=".service_locator.yN.__eu.App\Controller\MemberController::create()"/>
+        <argument key="App\Controller\MemberController::getAllMembers" type="service_closure" id=".service_locator.gDPr0i_.App\Controller\MemberController::getAllMembers()"/>
         <argument key="App\Controller\MemberController::getMemberById" type="service_closure" id=".service_locator.Zurzp9s.App\Controller\MemberController::getMemberById()"/>
         <argument key="App\Controller\MemberController::updateMember" type="service_closure" id=".service_locator.cDm6hfL.App\Controller\MemberController::updateMember()"/>
         <argument key="App\Controller\MemberController::deleteMember" type="service_closure" id=".service_locator.MMjNq0W.App\Controller\MemberController::deleteMember()"/>
+        <argument key="App\Controller\MemberController::invitationsBySpace" type="service_closure" id=".service_locator.z01bFfT.App\Controller\MemberController::invitationsBySpace()"/>
+        <argument key="App\Controller\MemberController::cancelInvitation" type="service_closure" id=".service_locator.s6rIcWw.App\Controller\MemberController::cancelInvitation()"/>
+        <argument key="App\Controller\MemberController::resendInvitation" type="service_closure" id=".service_locator.s6rIcWw.App\Controller\MemberController::resendInvitation()"/>
         <argument key="App\Controller\NotificationController::createNotification" type="service_closure" id=".service_locator.Pvsz2ki.App\Controller\NotificationController::createNotification()"/>
         <argument key="App\Controller\NotificationController::getAllNotifications" type="service_closure" id=".service_locator.IZrDbAW.App\Controller\NotificationController::getAllNotifications()"/>
         <argument key="App\Controller\NotificationController::getNotificationById" type="service_closure" id=".service_locator.IZrDbAW.App\Controller\NotificationController::getNotificationById()"/>
@@ -6388,15 +6441,17 @@
         <argument key="App\Controller\ServiceController::getServiceById" type="service_closure" id=".service_locator..wKp6bH.App\Controller\ServiceController::getServiceById()"/>
         <argument key="App\Controller\ServiceController::updateService" type="service_closure" id=".service_locator.Nxw1N6..App\Controller\ServiceController::updateService()"/>
         <argument key="App\Controller\ServiceController::deleteService" type="service_closure" id=".service_locator.Nxw1N6..App\Controller\ServiceController::deleteService()"/>
-        <argument key="App\Controller\SpaceController::createSpace" type="service_closure" id=".service_locator.Pvsz2ki.App\Controller\SpaceController::createSpace()"/>
-        <argument key="App\Controller\SpaceController::getAllSpaces" type="service_closure" id=".service_locator.L7r55b7.App\Controller\SpaceController::getAllSpaces()"/>
+        <argument key="App\Controller\SpaceController::createSpace" type="service_closure" id=".service_locator.AJ5eq3c.App\Controller\SpaceController::createSpace()"/>
+        <argument key="App\Controller\SpaceController::getAllSpaces" type="service_closure" id=".service_locator.Kq27LHM.App\Controller\SpaceController::getAllSpaces()"/>
         <argument key="App\Controller\SpaceController::getSpaceById" type="service_closure" id=".service_locator.L7r55b7.App\Controller\SpaceController::getSpaceById()"/>
         <argument key="App\Controller\SpaceController::archiveSpace" type="service_closure" id=".service_locator.5DPVkPI.App\Controller\SpaceController::archiveSpace()"/>
         <argument key="App\Controller\SpaceController::deleteSpace" type="service_closure" id=".service_locator.5DPVkPI.App\Controller\SpaceController::deleteSpace()"/>
-        <argument key="App\Controller\SubscriptionController::createSubscription" type="service_closure" id=".service_locator.M6r5JUz.App\Controller\SubscriptionController::createSubscription()"/>
-        <argument key="App\Controller\SubscriptionController::getAllSubscriptions" type="service_closure" id=".service_locator.egipcEH.App\Controller\SubscriptionController::getAllSubscriptions()"/>
-        <argument key="App\Controller\SubscriptionController::updateSubscription" type="service_closure" id=".service_locator.egipcEH.App\Controller\SubscriptionController::updateSubscription()"/>
-        <argument key="App\Controller\SubscriptionController::deleteSubscription" type="service_closure" id=".service_locator.egipcEH.App\Controller\SubscriptionController::deleteSubscription()"/>
+        <argument key="App\Controller\SubscriptionController::createSubscription" type="service_closure" id=".service_locator.gdjgS5B.App\Controller\SubscriptionController::createSubscription()"/>
+        <argument key="App\Controller\SubscriptionController::getAllSubscriptions" type="service_closure" id=".service_locator.Kq27LHM.App\Controller\SubscriptionController::getAllSubscriptions()"/>
+        <argument key="App\Controller\SubscriptionController::updateSubscription" type="service_closure" id=".service_locator.Kq27LHM.App\Controller\SubscriptionController::updateSubscription()"/>
+        <argument key="App\Controller\SubscriptionController::deleteSubscription" type="service_closure" id=".service_locator.Kq27LHM.App\Controller\SubscriptionController::deleteSubscription()"/>
+        <argument key="App\Controller\SubscriptionController::getMySubscriptions" type="service_closure" id=".service_locator.Kq27LHM.App\Controller\SubscriptionController::getMySubscriptions()"/>
+        <argument key="App\Controller\SubscriptionController::cancelSubscription" type="service_closure" id=".service_locator.Kq27LHM.App\Controller\SubscriptionController::cancelSubscription()"/>
         <argument key="App\Controller\SubscriptionTagController::create" type="service_closure" id=".service_locator.R0lEtSA.App\Controller\SubscriptionTagController::create()"/>
         <argument key="App\Controller\SubscriptionTagController::getAll" type="service_closure" id=".service_locator.gDJi.rQ.App\Controller\SubscriptionTagController::getAll()"/>
         <argument key="App\Controller\SubscriptionTagController::getById" type="service_closure" id=".service_locator.gDJi.rQ.App\Controller\SubscriptionTagController::getById()"/>
@@ -6419,11 +6474,19 @@
         <argument key="App\Controller\CategoryController:getCategoryById" type="service_closure" id=".service_locator.MTCWnA5.App\Controller\CategoryController::getCategoryById()"/>
         <argument key="App\Controller\CategoryController:updateCategory" type="service_closure" id=".service_locator.HQ.7fB5.App\Controller\CategoryController::updateCategory()"/>
         <argument key="App\Controller\CategoryController:deleteCategory" type="service_closure" id=".service_locator.HQ.7fB5.App\Controller\CategoryController::deleteCategory()"/>
-        <argument key="App\Controller\MemberController:createMember" type="service_closure" id=".service_locator.Pvsz2ki.App\Controller\MemberController::createMember()"/>
-        <argument key="App\Controller\MemberController:getAllMembers" type="service_closure" id=".service_locator.Zurzp9s.App\Controller\MemberController::getAllMembers()"/>
+        <argument key="App\Controller\InvitationController:all" type="service_closure" id=".service_locator.wuMwtd9.App\Controller\InvitationController::all()"/>
+        <argument key="App\Controller\InvitationController:mine" type="service_closure" id=".service_locator.4zjgymT.App\Controller\InvitationController::mine()"/>
+        <argument key="App\Controller\InvitationController:delete" type="service_closure" id=".service_locator.Ay5VEzj.App\Controller\InvitationController::delete()"/>
+        <argument key="App\Controller\InvitationController:acceptById" type="service_closure" id=".service_locator.4dyYeMM.App\Controller\InvitationController::acceptById()"/>
+        <argument key="App\Controller\InvitationController:declineById" type="service_closure" id=".service_locator.TSSemBD.App\Controller\InvitationController::declineById()"/>
+        <argument key="App\Controller\MemberController:create" type="service_closure" id=".service_locator.yN.__eu.App\Controller\MemberController::create()"/>
+        <argument key="App\Controller\MemberController:getAllMembers" type="service_closure" id=".service_locator.gDPr0i_.App\Controller\MemberController::getAllMembers()"/>
         <argument key="App\Controller\MemberController:getMemberById" type="service_closure" id=".service_locator.Zurzp9s.App\Controller\MemberController::getMemberById()"/>
         <argument key="App\Controller\MemberController:updateMember" type="service_closure" id=".service_locator.cDm6hfL.App\Controller\MemberController::updateMember()"/>
         <argument key="App\Controller\MemberController:deleteMember" type="service_closure" id=".service_locator.MMjNq0W.App\Controller\MemberController::deleteMember()"/>
+        <argument key="App\Controller\MemberController:invitationsBySpace" type="service_closure" id=".service_locator.z01bFfT.App\Controller\MemberController::invitationsBySpace()"/>
+        <argument key="App\Controller\MemberController:cancelInvitation" type="service_closure" id=".service_locator.s6rIcWw.App\Controller\MemberController::cancelInvitation()"/>
+        <argument key="App\Controller\MemberController:resendInvitation" type="service_closure" id=".service_locator.s6rIcWw.App\Controller\MemberController::resendInvitation()"/>
         <argument key="App\Controller\NotificationController:createNotification" type="service_closure" id=".service_locator.Pvsz2ki.App\Controller\NotificationController::createNotification()"/>
         <argument key="App\Controller\NotificationController:getAllNotifications" type="service_closure" id=".service_locator.IZrDbAW.App\Controller\NotificationController::getAllNotifications()"/>
         <argument key="App\Controller\NotificationController:getNotificationById" type="service_closure" id=".service_locator.IZrDbAW.App\Controller\NotificationController::getNotificationById()"/>
@@ -6442,15 +6505,17 @@
         <argument key="App\Controller\ServiceController:getServiceById" type="service_closure" id=".service_locator..wKp6bH.App\Controller\ServiceController::getServiceById()"/>
         <argument key="App\Controller\ServiceController:updateService" type="service_closure" id=".service_locator.Nxw1N6..App\Controller\ServiceController::updateService()"/>
         <argument key="App\Controller\ServiceController:deleteService" type="service_closure" id=".service_locator.Nxw1N6..App\Controller\ServiceController::deleteService()"/>
-        <argument key="App\Controller\SpaceController:createSpace" type="service_closure" id=".service_locator.Pvsz2ki.App\Controller\SpaceController::createSpace()"/>
-        <argument key="App\Controller\SpaceController:getAllSpaces" type="service_closure" id=".service_locator.L7r55b7.App\Controller\SpaceController::getAllSpaces()"/>
+        <argument key="App\Controller\SpaceController:createSpace" type="service_closure" id=".service_locator.AJ5eq3c.App\Controller\SpaceController::createSpace()"/>
+        <argument key="App\Controller\SpaceController:getAllSpaces" type="service_closure" id=".service_locator.Kq27LHM.App\Controller\SpaceController::getAllSpaces()"/>
         <argument key="App\Controller\SpaceController:getSpaceById" type="service_closure" id=".service_locator.L7r55b7.App\Controller\SpaceController::getSpaceById()"/>
         <argument key="App\Controller\SpaceController:archiveSpace" type="service_closure" id=".service_locator.5DPVkPI.App\Controller\SpaceController::archiveSpace()"/>
         <argument key="App\Controller\SpaceController:deleteSpace" type="service_closure" id=".service_locator.5DPVkPI.App\Controller\SpaceController::deleteSpace()"/>
-        <argument key="App\Controller\SubscriptionController:createSubscription" type="service_closure" id=".service_locator.M6r5JUz.App\Controller\SubscriptionController::createSubscription()"/>
-        <argument key="App\Controller\SubscriptionController:getAllSubscriptions" type="service_closure" id=".service_locator.egipcEH.App\Controller\SubscriptionController::getAllSubscriptions()"/>
-        <argument key="App\Controller\SubscriptionController:updateSubscription" type="service_closure" id=".service_locator.egipcEH.App\Controller\SubscriptionController::updateSubscription()"/>
-        <argument key="App\Controller\SubscriptionController:deleteSubscription" type="service_closure" id=".service_locator.egipcEH.App\Controller\SubscriptionController::deleteSubscription()"/>
+        <argument key="App\Controller\SubscriptionController:createSubscription" type="service_closure" id=".service_locator.gdjgS5B.App\Controller\SubscriptionController::createSubscription()"/>
+        <argument key="App\Controller\SubscriptionController:getAllSubscriptions" type="service_closure" id=".service_locator.Kq27LHM.App\Controller\SubscriptionController::getAllSubscriptions()"/>
+        <argument key="App\Controller\SubscriptionController:updateSubscription" type="service_closure" id=".service_locator.Kq27LHM.App\Controller\SubscriptionController::updateSubscription()"/>
+        <argument key="App\Controller\SubscriptionController:deleteSubscription" type="service_closure" id=".service_locator.Kq27LHM.App\Controller\SubscriptionController::deleteSubscription()"/>
+        <argument key="App\Controller\SubscriptionController:getMySubscriptions" type="service_closure" id=".service_locator.Kq27LHM.App\Controller\SubscriptionController::getMySubscriptions()"/>
+        <argument key="App\Controller\SubscriptionController:cancelSubscription" type="service_closure" id=".service_locator.Kq27LHM.App\Controller\SubscriptionController::cancelSubscription()"/>
         <argument key="App\Controller\SubscriptionTagController:create" type="service_closure" id=".service_locator.R0lEtSA.App\Controller\SubscriptionTagController::create()"/>
         <argument key="App\Controller\SubscriptionTagController:getAll" type="service_closure" id=".service_locator.gDJi.rQ.App\Controller\SubscriptionTagController::getAll()"/>
         <argument key="App\Controller\SubscriptionTagController:getById" type="service_closure" id=".service_locator.gDJi.rQ.App\Controller\SubscriptionTagController::getById()"/>
@@ -6554,10 +6619,11 @@
         <argument key="doctrine.orm.default_listeners.attach_entity_listeners" type="service_closure" id="doctrine.orm.default_listeners.attach_entity_listeners"/>
       </argument>
     </service>
-    <service id=".service_locator.ap3OnYo" class="Symfony\Component\DependencyInjection\ServiceLocator">
+    <service id=".service_locator.hotvx8V" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator"/>
       <argument type="collection">
         <argument key="App\Repository\CategoryRepository" type="service_closure" id="App\Repository\CategoryRepository"/>
+        <argument key="App\Repository\InvitationRepository" type="service_closure" id="App\Repository\InvitationRepository"/>
         <argument key="App\Repository\MemberRepository" type="service_closure" id="App\Repository\MemberRepository"/>
         <argument key="App\Repository\NotificationRepository" type="service_closure" id="App\Repository\NotificationRepository"/>
         <argument key="App\Repository\NotificationTargetRepository" type="service_closure" id="App\Repository\NotificationTargetRepository"/>
@@ -6658,6 +6724,12 @@
     <service id=".service_locator.ZyP9f7K.App\Controller\CategoryController" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator_context" id="App\Controller\CategoryController"/>
       <argument>App\Controller\CategoryController</argument>
+      <argument type="service" id="service_container"/>
+      <factory service=".service_locator.ZyP9f7K" method="withContext"/>
+    </service>
+    <service id=".service_locator.ZyP9f7K.App\Controller\InvitationController" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator_context" id="App\Controller\InvitationController"/>
+      <argument>App\Controller\InvitationController</argument>
       <argument type="service" id="service_container"/>
       <factory service=".service_locator.ZyP9f7K" method="withContext"/>
     </service>
@@ -6859,6 +6931,7 @@
           <argument>App\Kernel</argument>
           <argument>App\Controller\AuthController</argument>
           <argument>App\Controller\CategoryController</argument>
+          <argument>App\Controller\InvitationController</argument>
           <argument>App\Controller\MemberController</argument>
           <argument>App\Controller\NotificationController</argument>
           <argument>App\Controller\PaymentController</argument>
@@ -6918,6 +6991,13 @@
     </service>
     <service id=".errored..service_locator.zHyJIs5.Symfony\Component\Config\Loader\LoaderInterface" class="Symfony\Component\Config\Loader\LoaderInterface">
       <tag name="container.error" message="Cannot autowire service &quot;.service_locator.zHyJIs5&quot;: it needs an instance of &quot;Symfony\Component\Config\Loader\LoaderInterface&quot; but this type has been excluded from autowiring."/>
+    </service>
+    <service id=".App\Command\SeedServicesCommand.lazy" class="Symfony\Component\Console\Command\LazyCommand">
+      <argument>app:seed:services</argument>
+      <argument type="collection"/>
+      <argument>Importe le catalogue des services depuis un JSON</argument>
+      <argument>false</argument>
+      <argument type="service_closure" id="App\Command\SeedServicesCommand"/>
     </service>
     <service id=".console.command.about.lazy" class="Symfony\Component\Console\Command\LazyCommand">
       <argument>about</argument>
@@ -7458,8 +7538,9 @@
     </service>
     <service id="console.command_loader" class="Symfony\Component\Console\CommandLoader\ContainerCommandLoader" public="true">
       <tag name="container.no_preload"/>
-      <argument type="service" id=".service_locator..meMjTG"/>
+      <argument type="service" id=".service_locator.bDSCQKP"/>
       <argument type="collection">
+        <argument key="app:seed:services">App\Command\SeedServicesCommand</argument>
         <argument key="about">console.command.about</argument>
         <argument key="assets:install">console.command.assets_install</argument>
         <argument key="cache:clear">console.command.cache_clear</argument>
@@ -7558,9 +7639,10 @@
         <argument key="make:webhook">maker.auto_command.make_webhook</argument>
       </argument>
     </service>
-    <service id=".service_locator..meMjTG" class="Symfony\Component\DependencyInjection\ServiceLocator">
+    <service id=".service_locator.bDSCQKP" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator"/>
       <argument type="collection">
+        <argument key="App\Command\SeedServicesCommand" type="service_closure" id=".App\Command\SeedServicesCommand.lazy"/>
         <argument key="console.command.about" type="service_closure" id=".console.command.about.lazy"/>
         <argument key="console.command.assets_install" type="service_closure" id=".console.command.assets_install.lazy"/>
         <argument key="console.command.cache_clear" type="service_closure" id=".console.command.cache_clear.lazy"/>
@@ -7770,7 +7852,7 @@
     <service id="Twig\Environment" alias="twig"/>
     <service id="container.env_var_processors_locator" alias=".service_locator.pRu6x_4" public="true"/>
     <service id="twig.loader.filesystem" alias="twig.loader.native_filesystem"/>
-    <service id="argument_resolver.controller_locator" alias=".service_locator.zKA3mBQ"/>
+    <service id="argument_resolver.controller_locator" alias=".service_locator.KGU.Y57"/>
     <service id="doctrine.id_generator_locator" alias=".service_locator.BxSdgVt"/>
     <service id="twig.loader" alias="twig.loader.native_filesystem"/>
     <service id="Psr\Log\LoggerInterface" alias="logger"/>
@@ -7791,9 +7873,18 @@
     <service id=".service_locator.mje6fqU" alias=".service_locator.Pvsz2ki"/>
     <service id=".service_locator.qTXz_j5" alias=".service_locator.MTCWnA5"/>
     <service id=".service_locator.bt8GaC6" alias=".service_locator.HQ.7fB5"/>
+    <service id=".service_locator.zM4J7lZ" alias=".service_locator.wuMwtd9"/>
+    <service id=".service_locator.MP_GF6s" alias=".service_locator.4zjgymT"/>
+    <service id=".service_locator.0eODYlO" alias=".service_locator.Ay5VEzj"/>
+    <service id=".service_locator.86ogP3K" alias=".service_locator.4dyYeMM"/>
+    <service id=".service_locator.lHBVqgg" alias=".service_locator.TSSemBD"/>
+    <service id=".service_locator.IGNnjEJ" alias=".service_locator.yN.__eu"/>
+    <service id=".service_locator.pjNLID4" alias=".service_locator.gDPr0i_"/>
     <service id=".service_locator.R6v54Js" alias=".service_locator.Zurzp9s"/>
     <service id=".service_locator.bQMVu8R" alias=".service_locator.cDm6hfL"/>
     <service id=".service_locator.WmTxY6_" alias=".service_locator.MMjNq0W"/>
+    <service id=".service_locator.pGTiiKM" alias=".service_locator.z01bFfT"/>
+    <service id=".service_locator.sAQIAEE" alias=".service_locator.s6rIcWw"/>
     <service id=".service_locator.8KPWdcG" alias=".service_locator.IZrDbAW"/>
     <service id=".service_locator.PMbsz_L" alias=".service_locator.XTZwFOk"/>
     <service id=".service_locator.j1QIfQd" alias=".service_locator.gtQW1HD"/>
@@ -7805,13 +7896,15 @@
     <service id=".service_locator.SDad7u6" alias=".service_locator.A_Crmm9"/>
     <service id=".service_locator.te1JX0P" alias=".service_locator..wKp6bH"/>
     <service id=".service_locator.7z34snL" alias=".service_locator.Nxw1N6."/>
+    <service id=".service_locator.qidsS3R" alias=".service_locator.AJ5eq3c"/>
+    <service id=".service_locator.HQZddX8" alias=".service_locator.Kq27LHM"/>
     <service id=".service_locator._y5txIv" alias=".service_locator.L7r55b7"/>
     <service id=".service_locator.0nRQbAL" alias=".service_locator.5DPVkPI"/>
+    <service id=".service_locator.EXbrV6z" alias=".service_locator.gdjgS5B"/>
     <service id=".service_locator.4haK65Z" alias=".service_locator.gDJi.rQ"/>
     <service id=".service_locator.DHQnBg6" alias=".service_locator.KXcru5T"/>
     <service id=".service_locator.algT0ye" alias=".service_locator.Xl1aRqp"/>
     <service id=".service_locator.b9gRYob" alias=".service_locator.xyKlyvo"/>
-    <service id=".service_locator.HQZddX8" alias=".service_locator.Kq27LHM"/>
     <service id=".service_locator.xW_RHzi" alias=".service_locator.ZyP9f7K"/>
   </services>
 </container>

@@ -18,13 +18,18 @@ class Member
     public const RELATION_PARENT = 'parent';
     public const RELATION_CHILD = 'child';
     public const RELATION_PARTNER = 'partner';
+    public const RELATION_FRIEND = 'friend';
     public const RELATION_OTHER = 'other';
+    public const RELATION_SELF = 'self';
+
 
     private const RELATION_TYPES = [
         self::RELATION_PARENT,
         self::RELATION_CHILD,
         self::RELATION_PARTNER,
-        self::RELATION_OTHER
+        self::RELATION_FRIEND,
+        self::RELATION_OTHER,
+        self::RELATION_SELF
     ];
 
     #[ORM\Id]
@@ -50,8 +55,8 @@ class Member
     #[ORM\JoinColumn(nullable: false, onDelete: "CASCADE")]
     private ?Space $space = null;
 
-    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: "members")]
-    #[ORM\JoinColumn(nullable: false, onDelete: "CASCADE")]
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'members')]
+    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     private ?User $user = null;
 
     #[ORM\OneToMany(mappedBy: "member", targetEntity: Subscription::class, cascade: ["persist", "remove"])]

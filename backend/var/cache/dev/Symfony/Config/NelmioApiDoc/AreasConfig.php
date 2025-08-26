@@ -20,7 +20,7 @@ class AreasConfig
     private $documentation;
     private $cache;
     private $_usedProperties = [];
-
+    
     /**
      * @param ParamConfigurator|list<ParamConfigurator|mixed> $value
      *
@@ -30,10 +30,10 @@ class AreasConfig
     {
         $this->_usedProperties['pathPatterns'] = true;
         $this->pathPatterns = $value;
-
+    
         return $this;
     }
-
+    
     /**
      * @param ParamConfigurator|list<ParamConfigurator|mixed> $value
      *
@@ -43,10 +43,10 @@ class AreasConfig
     {
         $this->_usedProperties['hostPatterns'] = true;
         $this->hostPatterns = $value;
-
+    
         return $this;
     }
-
+    
     /**
      * @param ParamConfigurator|list<ParamConfigurator|mixed> $value
      *
@@ -56,10 +56,10 @@ class AreasConfig
     {
         $this->_usedProperties['namePatterns'] = true;
         $this->namePatterns = $value;
-
+    
         return $this;
     }
-
+    
     /**
      * whether to filter by attributes
      * @default false
@@ -70,10 +70,10 @@ class AreasConfig
     {
         $this->_usedProperties['withAttribute'] = true;
         $this->withAttribute = $value;
-
+    
         return $this;
     }
-
+    
     /**
      * if set disables default routes without attributes
      * @default false
@@ -84,10 +84,10 @@ class AreasConfig
     {
         $this->_usedProperties['disableDefaultRoutes'] = true;
         $this->disableDefaultRoutes = $value;
-
+    
         return $this;
     }
-
+    
     /**
      * @return $this
      */
@@ -95,10 +95,10 @@ class AreasConfig
     {
         $this->_usedProperties['documentation'] = true;
         $this->documentation[$key] = $value;
-
+    
         return $this;
     }
-
+    
     public function cache(array $value = []): \Symfony\Config\NelmioApiDoc\AreasConfig\CacheConfig
     {
         if (null === $this->cache) {
@@ -107,10 +107,10 @@ class AreasConfig
         } elseif (0 < \func_num_args()) {
             throw new InvalidConfigurationException('The node created by "cache()" has already been initialized. You cannot pass values the second time you call cache().');
         }
-
+    
         return $this->cache;
     }
-
+    
     public function __construct(array $value = [])
     {
         if (array_key_exists('path_patterns', $value)) {
@@ -118,48 +118,48 @@ class AreasConfig
             $this->pathPatterns = $value['path_patterns'];
             unset($value['path_patterns']);
         }
-
+    
         if (array_key_exists('host_patterns', $value)) {
             $this->_usedProperties['hostPatterns'] = true;
             $this->hostPatterns = $value['host_patterns'];
             unset($value['host_patterns']);
         }
-
+    
         if (array_key_exists('name_patterns', $value)) {
             $this->_usedProperties['namePatterns'] = true;
             $this->namePatterns = $value['name_patterns'];
             unset($value['name_patterns']);
         }
-
+    
         if (array_key_exists('with_attribute', $value)) {
             $this->_usedProperties['withAttribute'] = true;
             $this->withAttribute = $value['with_attribute'];
             unset($value['with_attribute']);
         }
-
+    
         if (array_key_exists('disable_default_routes', $value)) {
             $this->_usedProperties['disableDefaultRoutes'] = true;
             $this->disableDefaultRoutes = $value['disable_default_routes'];
             unset($value['disable_default_routes']);
         }
-
+    
         if (array_key_exists('documentation', $value)) {
             $this->_usedProperties['documentation'] = true;
             $this->documentation = $value['documentation'];
             unset($value['documentation']);
         }
-
+    
         if (array_key_exists('cache', $value)) {
             $this->_usedProperties['cache'] = true;
             $this->cache = new \Symfony\Config\NelmioApiDoc\AreasConfig\CacheConfig($value['cache']);
             unset($value['cache']);
         }
-
+    
         if ([] !== $value) {
             throw new InvalidConfigurationException(sprintf('The following keys are not supported by "%s": ', __CLASS__).implode(', ', array_keys($value)));
         }
     }
-
+    
     public function toArray(): array
     {
         $output = [];
@@ -184,7 +184,7 @@ class AreasConfig
         if (isset($this->_usedProperties['cache'])) {
             $output['cache'] = $this->cache->toArray();
         }
-
+    
         return $output;
     }
 

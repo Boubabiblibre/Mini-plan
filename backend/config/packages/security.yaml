@@ -36,12 +36,11 @@ security:
     - { path: ^/api/doc$, roles: PUBLIC_ACCESS }
     - { path: ^/api/doc.json$, roles: PUBLIC_ACCESS }
 
-    # 🔐 Routes sécurisées par rôle
+    # 🔐 Routes réservées ADMIN
     - { path: ^/api/user/all, roles: ROLE_ADMIN }
     - { path: ^/api/user/delete, roles: ROLE_ADMIN }
     - { path: ^/api/user/.+/promote, roles: ROLE_ADMIN }
     - { path: ^/api/user/.+/demote, roles: ROLE_ADMIN }
-
     - { path: ^/api/member/delete, roles: ROLE_ADMIN }
     - { path: ^/api/space/delete, roles: ROLE_ADMIN }
     - { path: ^/api/subscription/delete, roles: ROLE_ADMIN }
@@ -50,30 +49,10 @@ security:
     - { path: ^/api/payment/delete, roles: ROLE_ADMIN }
     - { path: ^/api/category/delete, roles: ROLE_ADMIN }
     - { path: ^/api/notification/delete, roles: ROLE_ADMIN }
-
     - { path: ^/api/permission/assign, roles: ROLE_ADMIN }
     - { path: ^/api/permission/revoke, roles: ROLE_ADMIN }
+    - { path: ^/api/invite/\d+/(accept|decline)$, roles: IS_AUTHENTICATED_FULLY }
 
-    # 🔐 Accès authentifié (utilisateur connecté)
-    - { path: ^/api/permission/user, roles: IS_AUTHENTICATED_FULLY }
-    - { path: ^/api/user, roles: IS_AUTHENTICATED_FULLY }
-    - { path: ^/api/member, roles: IS_AUTHENTICATED_FULLY }
-    - { path: ^/api/subscription, roles: IS_AUTHENTICATED_FULLY }
-    - { path: ^/api/subscription-tag, roles: IS_AUTHENTICATED_FULLY }
-    - { path: ^/api/tag, roles: IS_AUTHENTICATED_FULLY }
-    - { path: ^/api/service, roles: IS_AUTHENTICATED_FULLY }
-    - { path: ^/api/payment, roles: IS_AUTHENTICATED_FULLY }
-    - { path: ^/api/category, roles: IS_AUTHENTICATED_FULLY }
-    - { path: ^/api/notification, roles: IS_AUTHENTICATED_FULLY }
 
-    # 🔒 Fallback : tout ce qui commence par /api est protégé
+    # 🔐 Accès authentifié
     - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
-
-when@test:
-  security:
-    password_hashers:
-      App\Entity\User:
-        algorithm: auto
-        cost: 4
-        time_cost: 3
-        memory_cost: 10

@@ -39,69 +39,56 @@ class SpaceController extends AbstractController
      * )
      */
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
-    #[Route('/create', name: 'create_space', methods: ['POST'])]
-    public function createSpace(
-        Request $request,
-        EntityManagerInterface $entityManager,
-        ValidatorInterface $validator
-    ): JsonResponse {
-        $content = $request->getContent();
+#[Route('/create', name: 'create_space', methods: ['POST'])]
+public function createSpace(
+    Request $request,
+    EntityManagerInterface $em,
+    ValidatorInterface $validator
+): JsonResponse {
+    $data = json_decode($request->getContent(), true);
 
-        if (empty($content)) {
-            return $this->json(['error' => 'Le corps de la requête est vide'], Response::HTTP_BAD_REQUEST);
-        }
-
-        $data = json_decode($content, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return $this->json(['error' => 'Le format JSON est invalide'], Response::HTTP_BAD_REQUEST);
-        }
-
-        if (empty($data['name']) || empty($data['visibility'])) {
-            return $this->json(['error' => 'Le nom et la visibilité sont requis'], Response::HTTP_BAD_REQUEST);
-        }
-
-        $space = new Space();
-        $space->setName($data['name']);
-        $space->setVisibility($data['visibility']);
-        $space->setDescription($data['description'] ?? null);
-        $space->setLogo($data['logo'] ?? 'default.png');
-        $space->setCreatedBy($this->getUser());
-
-        $errors = $validator->validate($space);
-        if (count($errors) > 0) {
-            return $this->json(['error' => (string) $errors], Response::HTTP_BAD_REQUEST);
-        }
-
-        $entityManager->persist($space);
-        $entityManager->flush();
-
-        return $this->json([
-            'message' => 'Espace créé avec succès',
-            'space' => [
-                'id' => $space->getId(),
-                'name' => $space->getName(),
-                'visibility' => $space->getVisibility(),
-                'description' => $space->getDescription(),
-                'logo' => $space->getLogo(),
-                'created_at' => $space->getCreatedAt()?->format('Y-m-d\TH:i:sP'),
-                'created_by' => [
-                    'id' => $space->getCreatedBy()?->getId(),
-                    'email' => $space->getCreatedBy()?->getEmail(),
-                    'full_name' => $space->getCreatedBy()?->getFullName()
-                ]
-            ]
-        ], Response::HTTP_CREATED);
+    if (empty($data['name']) || empty($data['visibility'])) {
+        return $this->json(['error' => 'Le nom et la visibilité sont requis'], 400);
     }
 
-    /**
-     * @OA\Get(path="/api/space/all", summary="Lister tous les espaces")
-     */
-    #[Route('/all', name: 'get_all_spaces', methods: ['GET'])]
-    public function getAllSpaces(SpaceRepository $spaceRepository): JsonResponse
-    {
-        $spaces = $spaceRepository->findAll();
+    $name = trim($data['name']);
 
-        $data = array_map(fn($space) => [
+    // 🔒 Garde-fou anti-doublon (par utilisateur, insensible à la casse)
+    $existing = $em->getRepository(\App\Entity\Space::class)
+        ->createQueryBuilder('s')
+        ->andWhere('s.createdBy = :u')
+        ->andWhere('LOWER(s.name) = LOWER(:n)')
+        // ❗️ Remplacer setParameters([...]) par deux setParameter()
+        ->setParameter('u', $this->getUser())
+        ->setParameter('n', $name)
+        ->setMaxResults(1)
+        ->getQuery()
+        ->getOneOrNullResult();
+
+    if ($existing) {
+        return $this->json([
+            'error' => sprintf('Vous avez déjà un espace nommé “%s”.', $name)
+        ], 409); // 409 Conflict
+    }
+
+    $space = new \App\Entity\Space();
+    $space->setName($name);
+    $space->setVisibility($data['visibility']);
+    $space->setDescription($data['description'] ?? null);
+    $space->setLogo($data['logo'] ?? 'default.png');
+    $space->setCreatedBy($this->getUser());
+
+    $errors = $validator->validate($space);
+    if (count($errors) > 0) {
+        return $this->json(['error' => (string) $errors], 400);
+    }
+
+    $em->persist($space);
+    $em->flush();
+
+    return $this->json([
+        'message' => 'Espace créé avec succès',
+        'space' => [
             'id' => $space->getId(),
             'name' => $space->getName(),
             'visibility' => $space->getVisibility(),
@@ -111,12 +98,47 @@ class SpaceController extends AbstractController
             'created_by' => [
                 'id' => $space->getCreatedBy()?->getId(),
                 'email' => $space->getCreatedBy()?->getEmail(),
-                'full_name' => $space->getCreatedBy()?->getFullName()
-            ]
-        ], $spaces);
+                'full_name' => $space->getCreatedBy()?->getFullName(),
+            ],
+        ],
+    ], 201);
+}
 
-        return $this->json($data);
+
+    #[Route('/all', name: 'get_all_spaces', methods: ['GET'])]
+#[IsGranted('IS_AUTHENTICATED_FULLY')]
+public function getAllSpaces(EntityManagerInterface $em): JsonResponse
+{
+    $me = $this->getUser();
+
+    $qb = $em->getRepository(Space::class)->createQueryBuilder('s')
+        ->leftJoin('s.createdBy', 'cb')->addSelect('cb')
+        ->leftJoin('s.members', 'm')->addSelect('m')
+        ->leftJoin('m.user', 'mu')->addSelect('mu');
+
+    if (!$this->isGranted('ROLE_ADMIN')) {
+        $qb->andWhere('cb = :me OR mu = :me')->setParameter('me', $me);
     }
+
+    $spaces = $qb->getQuery()->getResult();
+
+    $data = array_map(fn(Space $space) => [
+        'id'          => $space->getId(),
+        'name'        => $space->getName(),
+        'visibility'  => $space->getVisibility(),
+        'description' => $space->getDescription(),
+        'logo'        => $space->getLogo(),
+        'created_at'  => $space->getCreatedAt()?->format('Y-m-d\TH:i:sP'),
+        'created_by'  => [
+            'id'        => $space->getCreatedBy()?->getId(),
+            'email'     => $space->getCreatedBy()?->getEmail(),
+            'full_name' => $space->getCreatedBy()?->getFullName(),
+        ]
+    ], $spaces);
+
+    return $this->json($data);
+}
+
 
     /**
      * @OA\Get(path="/api/space/{id}", summary="Récupérer un espace par son ID")

@@ -23,28 +23,6 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class UserController extends AbstractController
 {
     #[Route('/create', name: 'create_user', methods: ['POST'])]
-    /**
-     * @OA\Post(
-     *     path="/api/user/create",
-     *     summary="Créer un utilisateur",
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"firstname", "lastname", "email", "password"},
-     *             @OA\Property(property="firstname", type="string", example="John"),
-     *             @OA\Property(property="lastname", type="string", example="Doe"),
-     *             @OA\Property(property="email", type="string", example="john@example.com"),
-     *             @OA\Property(property="password", type="string", example="password123"),
-     *             @OA\Property(property="phone_number", type="string", example="0123456789"),
-     *             @OA\Property(property="avatar", type="string", example="avatar.png"),
-     *             @OA\Property(property="roles", type="array", @OA\Items(type="string"), example={"ROLE_ADMIN"})
-     *         )
-     *     ),
-     *     @OA\Response(response=201, description="Utilisateur créé avec succès"),
-     *     @OA\Response(response=400, description="Données invalides"),
-     *     @OA\Response(response=409, description="Utilisateur déjà existant")
-     * )
-     */
     public function createUser(
         Request $request,
         EntityManagerInterface $entityManager,
@@ -71,9 +49,10 @@ class UserController extends AbstractController
             $user->setAvatar($data['avatar'] ?? 'default.png');
             $user->setIsActive(true);
 
-            // ✅ Rôle dynamique avec validation basique
             $availableRoles = ['ROLE_USER', 'ROLE_ADMIN'];
-            $roles = isset($data['roles']) && is_array($data['roles']) ? array_intersect($data['roles'], $availableRoles) : ['ROLE_USER'];
+            $roles = isset($data['roles']) && is_array($data['roles'])
+                ? array_intersect($data['roles'], $availableRoles)
+                : ['ROLE_USER'];
             $user->setRoles($roles);
 
             $hashedPassword = $passwordHasher->hashPassword($user, $data['password']);
@@ -112,15 +91,6 @@ class UserController extends AbstractController
         }
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/user/all",
-     *     summary="Liste de tous les utilisateurs",
-     *     security={{"bearerAuth": {}}},
-     *     @OA\Response(response=200, description="Liste retournée avec succès"),
-     *     @OA\Response(response=403, description="Accès interdit")
-     * )
-     */
     #[Route('/all', name: 'get_all_users', methods: ['GET'])]
     #[IsGranted('ROLE_ADMIN')]
     public function getAllUsers(EntityManagerInterface $entityManager): JsonResponse
@@ -141,17 +111,27 @@ class UserController extends AbstractController
 
         return $this->json($response, Response::HTTP_OK);
     }
-    /**
-     * @OA\Get(
-     *     path="/api/user/{id}",
-     *     summary="Détails d'un utilisateur",
-     *     security={{"bearerAuth": {}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string")),
-     *     @OA\Response(response=200, description="Utilisateur trouvé"),
-     *     @OA\Response(response=404, description="Utilisateur non trouvé")
-     * )
-     */
-    #[Route('/{id}', name: 'get_user_by_id', methods: ['GET'])]
+
+    #[Route('/me', name: 'api_user_me', methods: ['GET'])]
+    public function me(): JsonResponse
+    {
+        /** @var User|null $user */
+        $user = $this->getUser();
+
+        if (!$user) {
+            return $this->json(['error' => 'Non authentifié'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        return $this->json([
+            'id'        => $user->getId(),
+            'firstname' => $user->getFirstname(),
+            'lastname'  => $user->getLastname(),
+            'email'     => $user->getEmail(),
+            'roles'     => $user->getRoles(),
+        ]);
+    }
+
+    #[Route('/{id}', name: 'get_user_by_id', methods: ['GET'], requirements: ['id' => '[0-9a-fA-F-]{36}'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function getUserById(string $id, EntityManagerInterface $entityManager): JsonResponse
     {
@@ -173,26 +153,8 @@ class UserController extends AbstractController
             'updated_at' => $user->getUpdatedAt()?->format('Y-m-d\TH:i:sP'),
         ]);
     }
-    /**
-     * @OA\Put(
-     *     path="/api/user/{id}",
-     *     summary="Mettre à jour un utilisateur",
-     *     security={{"bearerAuth": {}}},
-     *     @OA\RequestBody(
-     *         @OA\JsonContent(
-     *             @OA\Property(property="firstname", type="string"),
-     *             @OA\Property(property="lastname", type="string"),
-     *             @OA\Property(property="phone_number", type="string"),
-     *             @OA\Property(property="avatar", type="string"),
-     *             @OA\Property(property="password", type="string")
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Mise à jour réussie"),
-     *     @OA\Response(response=400, description="Validation échouée"),
-     *     @OA\Response(response=404, description="Utilisateur non trouvé")
-     * )
-     */
-    #[Route('/{id}', name: 'update_user', methods: ['PUT'])]
+
+    #[Route('/{id}', name: 'update_user', methods: ['PUT'], requirements: ['id' => '[0-9a-fA-F-]{36}'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function updateUser(
         string $id,
@@ -229,18 +191,8 @@ class UserController extends AbstractController
         $entityManager->flush();
         return $this->json(['message' => 'Utilisateur mis à jour avec succès']);
     }
-    /**
-     * @OA\Delete(
-     *     path="/api/user/delete/{id}",
-     *     summary="Supprimer un utilisateur",
-     *     security={{"bearerAuth": {}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string")),
-     *     @OA\Response(response=200, description="Utilisateur supprimé"),
-     *     @OA\Response(response=403, description="Action interdite"),
-     *     @OA\Response(response=404, description="Utilisateur non trouvé")
-     * )
-     */
-    #[Route('/delete/{id}', name: 'delete_user', methods: ['DELETE'])]
+
+    #[Route('/delete/{id}', name: 'delete_user', methods: ['DELETE'], requirements: ['id' => '[0-9a-fA-F-]{36}'])]
     #[IsGranted('ROLE_ADMIN')]
     public function deleteUser(string $id, EntityManagerInterface $entityManager, LoggerInterface $logger): JsonResponse
     {
@@ -270,17 +222,8 @@ class UserController extends AbstractController
             return $this->json(['error' => 'Erreur serveur'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
-    /**
-     * @OA\Patch(
-     *     path="/api/user/{id}/promote",
-     *     summary="Promouvoir un utilisateur en admin",
-     *     security={{"bearerAuth": {}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string")),
-     *     @OA\Response(response=200, description="Utilisateur promu"),
-     *     @OA\Response(response=404, description="Utilisateur non trouvé")
-     * )
-     */
-    #[Route('/{id}/promote', name: 'promote_user', methods: ['PATCH'])]
+
+    #[Route('/{id}/promote', name: 'promote_user', methods: ['PATCH'], requirements: ['id' => '[0-9a-fA-F-]{36}'])]
     #[IsGranted('ROLE_ADMIN')]
     public function promoteToAdmin(string $id, EntityManagerInterface $em): JsonResponse
     {
@@ -298,17 +241,7 @@ class UserController extends AbstractController
         ]);
     }
 
-    /**
-     * @OA\Patch(
-     *     path="/api/user/{id}/demote",
-     *     summary="Rétrograder un admin en utilisateur",
-     *     security={{"bearerAuth": {}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string")),
-     *     @OA\Response(response=200, description="Utilisateur rétrogradé"),
-     *     @OA\Response(response=404, description="Utilisateur non trouvé")
-     * )
-     */
-    #[Route('/{id}/demote', name: 'demote_user', methods: ['PATCH'])]
+    #[Route('/{id}/demote', name: 'demote_user', methods: ['PATCH'], requirements: ['id' => '[0-9a-fA-F-]{36}'])]
     #[IsGranted('ROLE_ADMIN')]
     public function demoteFromAdmin(string $id, EntityManagerInterface $em): JsonResponse
     {

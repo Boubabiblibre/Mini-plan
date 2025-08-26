@@ -7,7 +7,7 @@ namespace Proxies\__CG__\App\Entity;
  */
 class Space extends \App\Entity\Space implements \Doctrine\ORM\Proxy\InternalProxy
 {
-    use \Symfony\Component\VarExporter\LazyGhostTrait {
+     use \Symfony\Component\VarExporter\LazyGhostTrait {
         initializeLazyObject as private;
         setLazyObjectAsInitialized as public __setInitialized;
         isLazyObjectInitialized as private;
@@ -26,6 +26,7 @@ class Space extends \App\Entity\Space implements \Doctrine\ORM\Proxy\InternalPro
         "\0".parent::class."\0".'created_at' => [parent::class, 'created_at', null],
         "\0".parent::class."\0".'description' => [parent::class, 'description', null],
         "\0".parent::class."\0".'id' => [parent::class, 'id', null],
+        "\0".parent::class."\0".'invitations' => [parent::class, 'invitations', null],
         "\0".parent::class."\0".'logo' => [parent::class, 'logo', null],
         "\0".parent::class."\0".'members' => [parent::class, 'members', null],
         "\0".parent::class."\0".'name' => [parent::class, 'name', null],
@@ -38,6 +39,7 @@ class Space extends \App\Entity\Space implements \Doctrine\ORM\Proxy\InternalPro
         'created_at' => [parent::class, 'created_at', null],
         'description' => [parent::class, 'description', null],
         'id' => [parent::class, 'id', null],
+        'invitations' => [parent::class, 'invitations', null],
         'logo' => [parent::class, 'logo', null],
         'members' => [parent::class, 'members', null],
         'name' => [parent::class, 'name', null],
@@ -46,7 +48,7 @@ class Space extends \App\Entity\Space implements \Doctrine\ORM\Proxy\InternalPro
         'status' => [parent::class, 'status', null],
         'updated_at' => [parent::class, 'updated_at', null],
         'visibility' => [parent::class, 'visibility', null],
-    ];
+    ];
 
     public function __isInitialized(): bool
     {

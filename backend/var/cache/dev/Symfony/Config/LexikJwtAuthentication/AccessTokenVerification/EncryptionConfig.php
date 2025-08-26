@@ -17,7 +17,7 @@ class EncryptionConfig
     private $allowedContentEncryptionAlgorithms;
     private $keyset;
     private $_usedProperties = [];
-
+    
     /**
      * @default false
      * @param ParamConfigurator|bool $value
@@ -27,10 +27,10 @@ class EncryptionConfig
     {
         $this->_usedProperties['enabled'] = true;
         $this->enabled = $value;
-
+    
         return $this;
     }
-
+    
     /**
      * If enable, non-encrypted tokens or tokens that failed during decryption or verification processes are accepted.
      * @default false
@@ -41,10 +41,10 @@ class EncryptionConfig
     {
         $this->_usedProperties['continueOnDecryptionFailure'] = true;
         $this->continueOnDecryptionFailure = $value;
-
+    
         return $this;
     }
-
+    
     /**
      * @param ParamConfigurator|list<ParamConfigurator|mixed> $value
      *
@@ -54,10 +54,10 @@ class EncryptionConfig
     {
         $this->_usedProperties['headerCheckers'] = true;
         $this->headerCheckers = $value;
-
+    
         return $this;
     }
-
+    
     /**
      * @param ParamConfigurator|list<ParamConfigurator|mixed> $value
      *
@@ -67,10 +67,10 @@ class EncryptionConfig
     {
         $this->_usedProperties['allowedKeyEncryptionAlgorithms'] = true;
         $this->allowedKeyEncryptionAlgorithms = $value;
-
+    
         return $this;
     }
-
+    
     /**
      * @param ParamConfigurator|list<ParamConfigurator|mixed> $value
      *
@@ -80,10 +80,10 @@ class EncryptionConfig
     {
         $this->_usedProperties['allowedContentEncryptionAlgorithms'] = true;
         $this->allowedContentEncryptionAlgorithms = $value;
-
+    
         return $this;
     }
-
+    
     /**
      * The encryption keyset. It shall be JWKSet encoded.
      * @default null
@@ -94,10 +94,10 @@ class EncryptionConfig
     {
         $this->_usedProperties['keyset'] = true;
         $this->keyset = $value;
-
+    
         return $this;
     }
-
+    
     public function __construct(array $value = [])
     {
         if (array_key_exists('enabled', $value)) {
@@ -105,42 +105,42 @@ class EncryptionConfig
             $this->enabled = $value['enabled'];
             unset($value['enabled']);
         }
-
+    
         if (array_key_exists('continue_on_decryption_failure', $value)) {
             $this->_usedProperties['continueOnDecryptionFailure'] = true;
             $this->continueOnDecryptionFailure = $value['continue_on_decryption_failure'];
             unset($value['continue_on_decryption_failure']);
         }
-
+    
         if (array_key_exists('header_checkers', $value)) {
             $this->_usedProperties['headerCheckers'] = true;
             $this->headerCheckers = $value['header_checkers'];
             unset($value['header_checkers']);
         }
-
+    
         if (array_key_exists('allowed_key_encryption_algorithms', $value)) {
             $this->_usedProperties['allowedKeyEncryptionAlgorithms'] = true;
             $this->allowedKeyEncryptionAlgorithms = $value['allowed_key_encryption_algorithms'];
             unset($value['allowed_key_encryption_algorithms']);
         }
-
+    
         if (array_key_exists('allowed_content_encryption_algorithms', $value)) {
             $this->_usedProperties['allowedContentEncryptionAlgorithms'] = true;
             $this->allowedContentEncryptionAlgorithms = $value['allowed_content_encryption_algorithms'];
             unset($value['allowed_content_encryption_algorithms']);
         }
-
+    
         if (array_key_exists('keyset', $value)) {
             $this->_usedProperties['keyset'] = true;
             $this->keyset = $value['keyset'];
             unset($value['keyset']);
         }
-
+    
         if ([] !== $value) {
             throw new InvalidConfigurationException(sprintf('The following keys are not supported by "%s": ', __CLASS__).implode(', ', array_keys($value)));
         }
     }
-
+    
     public function toArray(): array
     {
         $output = [];
@@ -162,7 +162,7 @@ class EncryptionConfig
         if (isset($this->_usedProperties['keyset'])) {
             $output['keyset'] = $this->keyset;
         }
-
+    
         return $output;
     }
 

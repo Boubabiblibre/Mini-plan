@@ -1,65 +1,58 @@
 import { StyleSheet } from 'react-native';
 
 const AddSubscriptionStyles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000', // Fond noir
-  },
-  header: {
-    backgroundColor: '#72CE1D', // Vert
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingHorizontal: 15,
-    paddingVertical: 15,
-    borderBottomLeftRadius: 25,
-    borderBottomRightRadius: 25,
-  },
-  backButton: {
-    marginRight: 10,
-  },
-  headerTitle: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  formContainer: {
-    paddingHorizontal: 20,
-    marginTop: 20,
-  },
-  label: {
-    color: '#72CE1D', // Vert clair
-    fontSize: 14,
-    marginBottom: 5,
-  },
+  container: { flex:1, backgroundColor:'#000' },
+  formContainer: { paddingHorizontal:20, paddingTop:16 },
+  label: { color:'#B7FF27', fontSize:13, marginBottom:6, fontWeight:'600' },
   input: {
-    backgroundColor: '#C8B6E2', // Violet clair
-    borderRadius: 20,
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    marginBottom: 15,
-    color: '#000', // Texte noir
+    backgroundColor:'#111',
+    borderRadius:12,
+    paddingHorizontal:14,
+    paddingVertical:12,
+    marginBottom:14,
+    color:'#eee',
+    borderWidth:1,
+    borderColor:'#262626',
   },
-  // Champ avec l’icône flèche vers le bas
   inputWithIcon: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 15,
-    borderRadius: 20,
-    backgroundColor: '#C8B6E2',
+    flexDirection:'row',
+    alignItems:'center',
+    backgroundColor:'#111',
+    borderRadius:12,
+    borderWidth:1,
+    borderColor:'#262626',
+    marginBottom:14,
   },
   button: {
-    backgroundColor: '#72CE1D', // Vert
-    borderRadius: 20,
-    paddingVertical: 15,
-    alignItems: 'center',
-    marginTop: 10,
+    backgroundColor:'#B7FF27',
+    borderRadius:12,
+    paddingVertical:14,
+    alignItems:'center',
+    marginTop:8,
   },
-  buttonText: {
-    color: '#000',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
+  buttonText: { color:'#000', fontWeight:'800', letterSpacing:0.5 },
+  panel: {
+  width:'100%',
+  maxWidth: 520,
+  maxHeight: '80%',   // <= empêche la modal de s’étirer inutilement
+  backgroundColor:'#0f0f0f',
+  borderRadius:14,
+  padding:14,
+  borderWidth:1,
+  borderColor:'#262626'
+},
+alert: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  padding: 10,
+  borderRadius: 12,
+  borderWidth: 1,
+  marginBottom: 12,
+},
+alertError:   { backgroundColor: '#2a1215', borderColor: '#ff6b6b' },
+alertSuccess: { backgroundColor: '#172a18', borderColor: '#72CE1D' },
+alertText:    { color: '#eee', flexShrink: 1 },
+
 });
 
 export default AddSubscriptionStyles;

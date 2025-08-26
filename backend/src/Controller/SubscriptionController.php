@@ -106,90 +106,221 @@ class SubscriptionController extends AbstractController
      *     @OA\Response(response=404, description="Member not found")
      * )
      */
+    private function ok(array $data = [], int $code = Response::HTTP_OK): JsonResponse
+    {
+        return $this->json(['status' => 'ok'] + $data, $code);
+    }
+
+    private function err(string $message, int $code, array $extra = []): JsonResponse
+    {
+        // format uniforme côté front
+        return $this->json(['status' => 'error', 'message' => $message] + $extra, $code);
+    }
+
+    private function normalizeViolations($violations): array
+    {
+        $out = [];
+        foreach ($violations as $v) {
+            $out[] = ['field' => $v->getPropertyPath(), 'message' => $v->getMessage()];
+        }
+        return $out;
+    }
+
+    private function mapSubscription(Subscription $s): array
+    {
+        return [
+            'id'                => $s->getId(),
+            'name'              => $s->getName(),
+            'subscription_type' => $s->getSubscriptionType(),
+            'amount'            => $s->getAmount(),
+            'currency'          => $s->getCurrency(),
+            'start_date'        => $s->getStartDate()?->format('Y-m-d'),
+            'end_date'          => $s->getEndDate()?->format('Y-m-d'),
+            'billing_mode'      => $s->getBillingMode(),
+            'billing_frequency' => $s->getBillingFrequency(),
+            'auto_renewal'      => $s->getAutoRenewal(),
+            'status'            => $s->getStatus(),
+            'service_id'        => $s->getService()?->getId(),
+            'member_id'         => $s->getMember()?->getId(),
+            'created_at'        => $s->getCreatedAt()?->format(DATE_ATOM),
+            'updated_at'        => $s->getUpdatedAt()?->format(DATE_ATOM),
+        ];
+    }
+
     #[Route('/create', name: 'create_subscription', methods: ['POST'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function createSubscription(
         Request $request,
-        EntityManagerInterface $entityManager,
+        EntityManagerInterface $em,
         ValidatorInterface $validator,
         LoggerInterface $logger
     ): JsonResponse {
         try {
-            $data = json_decode($request->getContent(), true);
+            $data = json_decode($request->getContent(), true) ?? [];
 
-            if (!isset($data['name'], $data['subscription_type'], $data['start_date'], $data['member_id'], $data['service_id'])) {
-                return $this->json(['error' => 'Champs requis manquants'], Response::HTTP_BAD_REQUEST);
+            // Requis MINIMUM (member_id devient optionnel)
+            foreach (['name','subscription_type','start_date','service_id'] as $k) {
+                if (!isset($data[$k]) || $data[$k] === '') {
+                    return $this->err('Champs requis manquants', Response::HTTP_BAD_REQUEST, ['missing' => $k]);
+                }
             }
 
-            $member = $entityManager->getRepository(\App\Entity\Member::class)->find($data['member_id']);
-            $service = $entityManager->getRepository(\App\Entity\Service::class)->find($data['service_id']);
+            $user = $this->getUser();
 
-            if (!$member || !$service) {
-                return $this->json(['error' => 'Membre ou Service introuvable'], Response::HTTP_NOT_FOUND);
+            // Relations
+            $service = $em->getRepository(\App\Entity\Service::class)->find($data['service_id']);
+            if (!$service) return $this->err('Service introuvable', 404);
+
+            $member = null;
+            if (!empty($data['member_id'])) {
+                $member = $em->getRepository(\App\Entity\Member::class)->find($data['member_id']);
+                if (!$member) return $this->err('Membre introuvable', 404);
+                // Autorisation : admin OU propriétaire du member
+                if (!$this->isGranted('ROLE_ADMIN') && $member->getUser()?->getId() !== $user?->getId()) {
+                    return $this->err('Forbidden', 403);
+                }
             }
 
-            $subscription = new Subscription();
-            $subscription->setName($data['name']);
-            $subscription->setSubscriptionType($data['subscription_type']);
-            $subscription->setStartDate(new \DateTime($data['start_date']));
-            $subscription->setEndDate(isset($data['end_date']) ? new \DateTime($data['end_date']) : null);
-            $subscription->setAmount($data['amount'] ?? null);
-            $subscription->setCurrency($data['currency'] ?? 'EUR');
-            $subscription->setBillingMode($data['billing_mode'] ?? 'unknown');
-
-            // Associations obligatoires
-            $subscription->setMember($member);
-            $subscription->setService($service);
-
-            // Lier l'utilisateur connecté
-            if (method_exists($subscription, 'setUser') && $this->getUser()) {
-                $subscription->setUser($this->getUser());
+            // Dates
+            try {
+                $start = new \DateTimeImmutable($data['start_date']);
+                $end   = !empty($data['end_date']) ? new \DateTimeImmutable($data['end_date']) : null;
+                $billingDay = !empty($data['billing_day']) ? new \DateTimeImmutable($data['billing_day']) : null;
+            } catch (\Throwable $e) {
+                return $this->err('Format de date invalide (YYYY-MM-DD)', 400);
             }
 
-            $errors = $validator->validate($subscription);
-            if (count($errors) > 0) {
-                return $this->json(['error' => (string) $errors], Response::HTTP_BAD_REQUEST);
+            // Doublons : scope par "owner"
+            $repo = $em->getRepository(Subscription::class);
+            if ($member) {
+                // Cas "espace" → doublon par MEMBER
+                $dupName = $repo->createQueryBuilder('s')
+                    ->andWhere('s.member = :m')->setParameter('m', $member)
+                    ->andWhere('LOWER(s.name) = LOWER(:n)')->setParameter('n', trim((string)$data['name']))
+                    ->setMaxResults(1)->getQuery()->getOneOrNullResult();
+                $dupService = $repo->findOneBy(['member' => $member, 'service' => $service]);
+            } else {
+                // Cas "perso" → doublon par USER
+                $dupName = $repo->createQueryBuilder('s')
+                    ->andWhere('s.user = :u')->setParameter('u', $user)
+                    ->andWhere('s.member IS NULL')
+                    ->andWhere('LOWER(s.name) = LOWER(:n)')->setParameter('n', trim((string)$data['name']))
+                    ->setMaxResults(1)->getQuery()->getOneOrNullResult();
+                $dupService = $repo->findOneBy(['user' => $user, 'member' => null, 'service' => $service]);
+            }
+            if ($dupName || $dupService) {
+                return $this->err(
+                    'Un abonnement identique existe déjà (même nom ou même service).',
+                    Response::HTTP_CONFLICT,
+                    ['code' => 'DUPLICATE']
+                );
             }
 
-            $entityManager->persist($subscription);
-            $entityManager->flush();
+            // Construction
+            $sub = new Subscription();
+            $sub->setName(trim((string)$data['name']));
+            $sub->setSubscriptionType((string)$data['subscription_type']);
+            $sub->setStartDate($start);
+            $sub->setEndDate($end);
+            $sub->setService($service);
+            $sub->setUser($user);
+            $sub->setMember($member); // peut rester null
 
-            return $this->json([
-                'message' => 'Subscription créée avec succès',
-                'subscription_id' => $subscription->getId()
+            // Montant/devise
+            $rawAmount = $data['amount'] ?? 0;
+            if (is_string($rawAmount)) { $rawAmount = str_replace(',', '.', $rawAmount); }
+            $sub->setAmount($rawAmount);
+            $sub->setCurrency($data['currency'] ?? 'EUR');
+
+            // Facturation
+            $sub->setBillingMode($data['billing_mode'] ?? 'unknown');
+            if (!empty($data['billing_frequency'])) $sub->setBillingFrequency((string)$data['billing_frequency']);
+            if (!empty($billingDay)) $sub->setBillingDay($billingDay);
+            if (array_key_exists('auto_renewal', $data)) $sub->setAutoRenewal((bool)$data['auto_renewal']);
+
+            // Divers
+            if (array_key_exists('status', $data)) $sub->setStatus((string)$data['status']);
+            if (array_key_exists('notes', $data))  $sub->setNotes($data['notes'] ?? null);
+
+            // Validation
+            $violations = $validator->validate($sub);
+            if (count($violations) > 0) {
+                return $this->err('Données invalides', 400, ['fields' => $this->normalizeViolations($violations)]);
+            }
+
+            $em->persist($sub);
+            $em->flush();
+
+            return $this->ok([
+                'message' => 'Abonnement créé',
+                'id'      => $sub->getId(),
             ], Response::HTTP_CREATED);
-        } catch (\Exception $e) {
-            return $this->json([
-                'error' => 'Server error',
-                'details' => $e->getMessage()
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+
+        } catch (\Throwable $e) {
+            $logger->error('createSubscription: '.$e->getMessage());
+            return $this->err('Erreur serveur', 500);
         }
     }
+
 
     #[Route('/all', name: 'get_all_subscriptions', methods: ['GET'])]
-    public function getAllSubscriptions(EntityManagerInterface $entityManager): JsonResponse
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function getAllSubscriptions(EntityManagerInterface $em): JsonResponse
     {
-        $subscriptions = $entityManager->getRepository(Subscription::class)->findAll();
-        return $this->json($subscriptions);
-    }
+        $me = $this->getUser();
 
-    #[Route('/update/{id}', name: 'update_subscription', methods: ['PUT'])]
-    public function updateSubscription(string $id, Request $request, EntityManagerInterface $entityManager): JsonResponse
-    {
-        $subscription = $entityManager->getRepository(Subscription::class)->find($id);
-        if (!$subscription) {
-            return $this->json(['error' => 'Subscription not found'], Response::HTTP_NOT_FOUND);
+        $qb = $em->getRepository(Subscription::class)->createQueryBuilder('s')
+            ->leftJoin('s.user', 'u')->addSelect('u')
+            ->leftJoin('s.member', 'm')->addSelect('m')
+            ->leftJoin('m.user', 'mu')->addSelect('mu');
+
+        if (!$this->isGranted('ROLE_ADMIN')) {
+            $qb->andWhere('u = :me OR mu = :me')->setParameter('me', $me);
         }
 
-        $data = json_decode($request->getContent(), true);
-        $subscription->setName($data['name'] ?? $subscription->getName());
-        $subscription->setAmount($data['amount'] ?? $subscription->getAmount());
-        $subscription->setCurrency($data['currency'] ?? $subscription->getCurrency());
+        $subs = $qb->getQuery()->getResult();
 
-        $entityManager->flush();
-
-        return $this->json(['message' => 'Subscription updated successfully']);
+        return $this->json(array_map([$this, 'mapSubscription'], $subs));
     }
+
+    #[Route('/update/{id}', name: 'update_subscription', methods: ['PUT','PATCH'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function updateSubscription(string $id, Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $sub = $em->getRepository(Subscription::class)->find($id);
+        if (!$sub) return $this->json(['error' => 'Subscription not found'], 404);
+
+        $user = $this->getUser();
+        if (
+            !$this->isGranted('ROLE_ADMIN') &&
+            $sub->getUser()?->getId() !== $user?->getId() &&
+            $sub->getMember()?->getUser()?->getId() !== $user?->getId()
+        ) {
+            return $this->json(['error' => 'Forbidden'], 403);
+        }
+
+        $data = json_decode($request->getContent(), true) ?? [];
+
+        // ... (autres champs)
+
+        if (array_key_exists('member_id', $data)) {
+            if ($data['member_id']) {
+                $member = $em->getRepository(\App\Entity\Member::class)->find($data['member_id']);
+                if (!$member) return $this->json(['error' => 'Member not found'], 400);
+                if (!$this->isGranted('ROLE_ADMIN') && $member->getUser()?->getId() !== $user?->getId()) {
+                    return $this->json(['error' => 'Forbidden'], 403);
+                }
+                $sub->setMember($member);
+            } else {
+                // null / vide → détache du space (perso)
+                $sub->setMember(null);
+            }
+        }
+
+        $em->flush();
+        return $this->json(['message' => 'Subscription updated']);
+    }
+
     /**
      * @OA\Delete(
      *     path="/api/subscription/delete/{id}",
@@ -204,17 +335,62 @@ class SubscriptionController extends AbstractController
 
 
     #[Route('/delete/{id}', name: 'delete_subscription', methods: ['DELETE'])]
-    #[IsGranted('ROLE_ADMIN')]
-    public function deleteSubscription(string $id, EntityManagerInterface $entityManager): JsonResponse
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function deleteSubscription(string $id, EntityManagerInterface $em): JsonResponse
     {
-        $subscription = $entityManager->getRepository(Subscription::class)->find($id);
+        $subscription = $em->getRepository(Subscription::class)->find($id);
         if (!$subscription) {
-            return $this->json(['error' => 'Subscription not found'], Response::HTTP_NOT_FOUND);
+            return $this->json(['error' => 'Subscription not found'], 404);
         }
 
-        $entityManager->remove($subscription);
-        $entityManager->flush();
+        $user = $this->getUser();
 
-        return $this->json(['message' => 'Subscription deleted successfully']);
+        if (
+            !$this->isGranted('ROLE_ADMIN') &&
+            $subscription->getUser()?->getId() !== $user?->getId() &&
+            $subscription->getMember()?->getUser()?->getId() !== $user?->getId()
+        ) {
+            return $this->json(['error' => 'Forbidden'], 403);
+        }
+
+    }
+
+    #[Route('/mine', name: 'get_my_subscriptions', methods: ['GET'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function getMySubscriptions(EntityManagerInterface $em): JsonResponse
+    {
+        $me = $this->getUser();
+
+        $subs = $em->getRepository(Subscription::class)->createQueryBuilder('s')
+            ->leftJoin('s.user', 'u')->addSelect('u')
+            ->leftJoin('s.member', 'm')->addSelect('m')
+            ->leftJoin('m.user', 'mu')->addSelect('mu')
+            ->andWhere('u = :me OR mu = :me')
+            ->setParameter('me', $me)
+            ->getQuery()->getResult();
+
+        return $this->json(array_map([$this, 'mapSubscription'], $subs));
+    }
+
+    #[Route('/cancel/{id}', name: 'cancel_subscription', methods: ['PATCH'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function cancelSubscription(string $id, EntityManagerInterface $em): JsonResponse
+    {
+        $sub = $em->getRepository(Subscription::class)->find($id);
+        if (!$sub) return $this->json(['error' => 'Subscription not found'], 404);
+
+        $user = $this->getUser();
+        if (
+            !$this->isGranted('ROLE_ADMIN') &&
+            $sub->getUser()?->getId() !== $user?->getId() &&
+            $sub->getMember()?->getUser()?->getId() !== $user?->getId()
+        ) {
+            return $this->json(['error' => 'Forbidden'], 403);
+        }
+
+        $sub->setEndDate(new \DateTimeImmutable()); // obsolète à partir d’aujourd’hui
+        $em->flush();
+
+        return $this->json(['message' => 'Subscription cancelled']);
     }
 }

@@ -1,12 +1,41 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import styles from "../../styles/HomeStyles";
 import useCookieHook from "../../hooks/use-cookie";
 import { useAccountStore } from "../../store/account";
+import { fetchAccount } from "../../services/account";
 
 const HomeScreen = ({ navigation }) => {
   const { isLogged, logout } = useCookieHook();
-  const { account } = useAccountStore();
+  const { setAccount, restoreAccount } = useAccountStore();
+
+  const [me, setMe] = useState(null);
+
+  useEffect(() => {
+    const load = async () => {
+      if (!isLogged) {
+        restoreAccount();
+        setMe(null);
+        return;
+      }
+      try {
+        const user = await fetchAccount();
+        console.log("👤 fetchAccount a retourné:", user);
+        if (user) {
+          setMe(user);       // local
+          setAccount(user);  // global aussi
+        } else {
+          restoreAccount();
+          setMe(null);
+        }
+      } catch (e) {
+        console.error("Erreur fetchAccount:", e);
+        restoreAccount();
+        setMe(null);
+      }
+    };
+    load();
+  }, [isLogged, restoreAccount, setAccount]);
 
   return (
     <View style={styles.container}>
@@ -19,8 +48,7 @@ const HomeScreen = ({ navigation }) => {
         </Text>
       </View>
 
-      {/* ---------------- Visiteur ---------------- */}
-      {!isLogged && (
+      {!isLogged ? (
         <>
           <TouchableOpacity
             style={styles.button}
@@ -36,13 +64,10 @@ const HomeScreen = ({ navigation }) => {
             <Text style={styles.buttonText}>INSCRIPTION</Text>
           </TouchableOpacity>
         </>
-      )}
-
-      {/* ---------------- Utilisateur connecté ---------------- */}
-      {isLogged && (
+      ) : (
         <>
           <Text style={styles.welcomeText}>
-            Bienvenue {account?.firstname ?? ""} !
+            Bienvenue {me?.firstname ?? me?.email ?? "Utilisateur"} !
           </Text>
 
           <TouchableOpacity
@@ -63,6 +88,8 @@ const HomeScreen = ({ navigation }) => {
             style={[styles.button, styles.dangerButton]}
             onPress={() => {
               logout();
+              restoreAccount();
+              setMe(null);
               navigation.navigate("Login");
             }}
           >

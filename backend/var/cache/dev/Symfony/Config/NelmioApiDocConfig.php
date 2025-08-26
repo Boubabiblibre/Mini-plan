@@ -24,7 +24,7 @@ class NelmioApiDocConfig implements \Symfony\Component\Config\Builder\ConfigBuil
     private $areas;
     private $models;
     private $_usedProperties = [];
-
+    
     /**
      * Use the symfony/type-info component for determining types.
      * @default false
@@ -35,10 +35,10 @@ class NelmioApiDocConfig implements \Symfony\Component\Config\Builder\ConfigBuil
     {
         $this->_usedProperties['typeInfo'] = true;
         $this->typeInfo = $value;
-
+    
         return $this;
     }
-
+    
     /**
      * If true, `groups` passed to #[Model] attributes will be used to limit validation constraints
      * @default false
@@ -49,10 +49,10 @@ class NelmioApiDocConfig implements \Symfony\Component\Config\Builder\ConfigBuil
     {
         $this->_usedProperties['useValidationGroups'] = true;
         $this->useValidationGroups = $value;
-
+    
         return $this;
     }
-
+    
     public function cache(array $value = []): \Symfony\Config\NelmioApiDoc\CacheConfig
     {
         if (null === $this->cache) {
@@ -61,10 +61,10 @@ class NelmioApiDocConfig implements \Symfony\Component\Config\Builder\ConfigBuil
         } elseif (0 < \func_num_args()) {
             throw new InvalidConfigurationException('The node created by "cache()" has already been initialized. You cannot pass values the second time you call cache().');
         }
-
+    
         return $this->cache;
     }
-
+    
     /**
      * @return $this
      */
@@ -72,10 +72,10 @@ class NelmioApiDocConfig implements \Symfony\Component\Config\Builder\ConfigBuil
     {
         $this->_usedProperties['documentation'] = true;
         $this->documentation[$key] = $value;
-
+    
         return $this;
     }
-
+    
     /**
      * @param ParamConfigurator|list<ParamConfigurator|mixed> $value
      *
@@ -85,10 +85,10 @@ class NelmioApiDocConfig implements \Symfony\Component\Config\Builder\ConfigBuil
     {
         $this->_usedProperties['mediaTypes'] = true;
         $this->mediaTypes = $value;
-
+    
         return $this;
     }
-
+    
     /**
      * UI configuration options
      * @default {"assets_mode":"cdn","swagger_ui_config":[],"redocly_config":[],"stoplight_config":[]}
@@ -101,10 +101,10 @@ class NelmioApiDocConfig implements \Symfony\Component\Config\Builder\ConfigBuil
         } elseif (0 < \func_num_args()) {
             throw new InvalidConfigurationException('The node created by "htmlConfig()" has already been initialized. You cannot pass values the second time you call htmlConfig().');
         }
-
+    
         return $this->htmlConfig;
     }
-
+    
     /**
      * @template TValue
      * @param TValue $value
@@ -118,20 +118,20 @@ class NelmioApiDocConfig implements \Symfony\Component\Config\Builder\ConfigBuil
         if (!\is_array($value)) {
             $this->_usedProperties['areas'] = true;
             $this->areas[$name] = $value;
-
+    
             return $this;
         }
-
+    
         if (!isset($this->areas[$name]) || !$this->areas[$name] instanceof \Symfony\Config\NelmioApiDoc\AreasConfig) {
             $this->_usedProperties['areas'] = true;
             $this->areas[$name] = new \Symfony\Config\NelmioApiDoc\AreasConfig($value);
         } elseif (1 < \func_num_args()) {
             throw new InvalidConfigurationException('The node created by "areas()" has already been initialized. You cannot pass values the second time you call areas().');
         }
-
+    
         return $this->areas[$name];
     }
-
+    
     /**
      * @default {"use_jms":false,"names":[]}
     */
@@ -143,15 +143,15 @@ class NelmioApiDocConfig implements \Symfony\Component\Config\Builder\ConfigBuil
         } elseif (0 < \func_num_args()) {
             throw new InvalidConfigurationException('The node created by "models()" has already been initialized. You cannot pass values the second time you call models().');
         }
-
+    
         return $this->models;
     }
-
+    
     public function getExtensionAlias(): string
     {
         return 'nelmio_api_doc';
     }
-
+    
     public function __construct(array $value = [])
     {
         if (array_key_exists('type_info', $value)) {
@@ -159,54 +159,54 @@ class NelmioApiDocConfig implements \Symfony\Component\Config\Builder\ConfigBuil
             $this->typeInfo = $value['type_info'];
             unset($value['type_info']);
         }
-
+    
         if (array_key_exists('use_validation_groups', $value)) {
             $this->_usedProperties['useValidationGroups'] = true;
             $this->useValidationGroups = $value['use_validation_groups'];
             unset($value['use_validation_groups']);
         }
-
+    
         if (array_key_exists('cache', $value)) {
             $this->_usedProperties['cache'] = true;
             $this->cache = new \Symfony\Config\NelmioApiDoc\CacheConfig($value['cache']);
             unset($value['cache']);
         }
-
+    
         if (array_key_exists('documentation', $value)) {
             $this->_usedProperties['documentation'] = true;
             $this->documentation = $value['documentation'];
             unset($value['documentation']);
         }
-
+    
         if (array_key_exists('media_types', $value)) {
             $this->_usedProperties['mediaTypes'] = true;
             $this->mediaTypes = $value['media_types'];
             unset($value['media_types']);
         }
-
+    
         if (array_key_exists('html_config', $value)) {
             $this->_usedProperties['htmlConfig'] = true;
             $this->htmlConfig = new \Symfony\Config\NelmioApiDoc\HtmlConfigConfig($value['html_config']);
             unset($value['html_config']);
         }
-
+    
         if (array_key_exists('areas', $value)) {
             $this->_usedProperties['areas'] = true;
             $this->areas = array_map(fn ($v) => \is_array($v) ? new \Symfony\Config\NelmioApiDoc\AreasConfig($v) : $v, $value['areas']);
             unset($value['areas']);
         }
-
+    
         if (array_key_exists('models', $value)) {
             $this->_usedProperties['models'] = true;
             $this->models = new \Symfony\Config\NelmioApiDoc\ModelsConfig($value['models']);
             unset($value['models']);
         }
-
+    
         if ([] !== $value) {
             throw new InvalidConfigurationException(sprintf('The following keys are not supported by "%s": ', __CLASS__).implode(', ', array_keys($value)));
         }
     }
-
+    
     public function toArray(): array
     {
         $output = [];
@@ -234,7 +234,7 @@ class NelmioApiDocConfig implements \Symfony\Component\Config\Builder\ConfigBuil
         if (isset($this->_usedProperties['models'])) {
             $output['models'] = $this->models->toArray();
         }
-
+    
         return $output;
     }
 

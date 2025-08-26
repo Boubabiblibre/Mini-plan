@@ -15,7 +15,7 @@ class ModelsConfig
     private $useJms;
     private $names;
     private $_usedProperties = [];
-
+    
     /**
      * @default false
      * @param ParamConfigurator|bool $value
@@ -25,17 +25,17 @@ class ModelsConfig
     {
         $this->_usedProperties['useJms'] = true;
         $this->useJms = $value;
-
+    
         return $this;
     }
-
+    
     public function names(array $value = []): \Symfony\Config\NelmioApiDoc\Models\NamesConfig
     {
         $this->_usedProperties['names'] = true;
-
+    
         return $this->names[] = new \Symfony\Config\NelmioApiDoc\Models\NamesConfig($value);
     }
-
+    
     public function __construct(array $value = [])
     {
         if (array_key_exists('use_jms', $value)) {
@@ -43,18 +43,18 @@ class ModelsConfig
             $this->useJms = $value['use_jms'];
             unset($value['use_jms']);
         }
-
+    
         if (array_key_exists('names', $value)) {
             $this->_usedProperties['names'] = true;
             $this->names = array_map(fn ($v) => new \Symfony\Config\NelmioApiDoc\Models\NamesConfig($v), $value['names']);
             unset($value['names']);
         }
-
+    
         if ([] !== $value) {
             throw new InvalidConfigurationException(sprintf('The following keys are not supported by "%s": ', __CLASS__).implode(', ', array_keys($value)));
         }
     }
-
+    
     public function toArray(): array
     {
         $output = [];
@@ -64,7 +64,7 @@ class ModelsConfig
         if (isset($this->_usedProperties['names'])) {
             $output['names'] = array_map(fn ($v) => $v->toArray(), $this->names);
         }
-
+    
         return $output;
     }
 

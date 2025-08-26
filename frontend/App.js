@@ -25,7 +25,14 @@ const linking = {
       Register: "register",
       Dashboard: "dashboard",
       SubscriptionList: "subscriptions",
-      /* ajoute d'autres écrans si besoin */
+      SubscriptionDetails: "subscription/:id",
+      ActiveSubscription: "subscription/active/:id",
+      AddSubscription: "subscription/add",
+      AddSubscription2: "subscription/add2",
+      CustomSubscription: "subscription/custom/:id",
+      SpacesScreen: "spaces",
+      SpaceDetails: "space/:id",
+      Profile: "profile",
     },
   },
 };

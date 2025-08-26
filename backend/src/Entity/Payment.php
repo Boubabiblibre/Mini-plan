@@ -9,36 +9,36 @@ use Ramsey\Uuid\Doctrine\UuidGenerator;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: PaymentRepository::class)]
-#[ORM\Table(name: "payments")] // Ajout du nom de la table
+#[ORM\Table(name: "payments")]
 #[ORM\HasLifecycleCallbacks]
 class Payment
 {
-    public const STATUS_PENDING = 'pending';
+    public const STATUS_PENDING   = 'pending';
     public const STATUS_COMPLETED = 'completed';
-    public const STATUS_FAILED = 'failed';
+    public const STATUS_FAILED    = 'failed';
     public const STATUS_CANCELLED = 'cancelled';
 
-    public const METHOD_CREDIT_CARD = 'credit_card';
-    public const METHOD_PAYPAL = 'paypal';
+    public const METHOD_CREDIT_CARD   = 'credit_card';
+    public const METHOD_PAYPAL        = 'paypal';
     public const METHOD_BANK_TRANSFER = 'bank_transfer';
 
     private const STATUS_TYPES = [
         self::STATUS_PENDING,
         self::STATUS_COMPLETED,
         self::STATUS_FAILED,
-        self::STATUS_CANCELLED
+        self::STATUS_CANCELLED,
     ];
 
     private const PAYMENT_METHODS = [
         self::METHOD_CREDIT_CARD,
         self::METHOD_PAYPAL,
-        self::METHOD_BANK_TRANSFER
+        self::METHOD_BANK_TRANSFER,
     ];
 
     private const CURRENCY_TYPES = ['EUR', 'USD', 'GBP', 'CAD', 'AUD'];
 
     #[ORM\Id]
-    #[ORM\Column(type: "guid", unique: true)] // Remplacement de "uuid" par "guid"
+    #[ORM\Column(type: "guid", unique: true)]
     #[ORM\GeneratedValue(strategy: "CUSTOM")]
     #[ORM\CustomIdGenerator(class: UuidGenerator::class)]
     private ?string $id = null;
@@ -46,7 +46,7 @@ class Payment
     #[Assert\NotBlank]
     #[Assert\Positive]
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
-    private ?float $amount = null;
+    private ?string $amount = null; // ⚠️ DECIMAL => string en Doctrine
 
     #[Assert\NotBlank]
     #[Assert\Choice(choices: self::CURRENCY_TYPES, message: "Devise invalide.")]
@@ -87,12 +87,9 @@ class Payment
     #[ORM\PrePersist]
     public function setCreationTimestamps(): void
     {
-        if ($this->created_at === null) {
-            $this->created_at = new \DateTimeImmutable();
-        }
-        if ($this->updated_at === null) {
-            $this->updated_at = new \DateTimeImmutable();
-        }
+        $now = new \DateTimeImmutable();
+        $this->created_at ??= $now;
+        $this->updated_at ??= $now;
     }
 
     #[ORM\PreUpdate]
@@ -106,14 +103,15 @@ class Payment
         return $this->id;
     }
 
-    public function getAmount(): ?float
+    public function getAmount(): ?string
     {
-        return $this->amount;
+        return $this->amount; // renvoie la string "12.34"
     }
 
-    public function setAmount(float $amount): static
+    public function setAmount(float|string $amount): self
     {
-        $this->amount = number_format($amount, 2, '.', '');
+        // on accepte float ou string et on normalise en "xx.yy"
+        $this->amount = number_format((float)$amount, 2, '.', '');
         return $this;
     }
 
@@ -122,7 +120,7 @@ class Payment
         return $this->currency;
     }
 
-    public function setCurrency(string $currency): static
+    public function setCurrency(string $currency): self
     {
         if (!in_array($currency, self::CURRENCY_TYPES, true)) {
             throw new \InvalidArgumentException("Devise invalide.");
@@ -136,7 +134,7 @@ class Payment
         return $this->payment_method;
     }
 
-    public function setPaymentMethod(string $payment_method): static
+    public function setPaymentMethod(string $payment_method): self
     {
         if (!in_array($payment_method, self::PAYMENT_METHODS, true)) {
             throw new \InvalidArgumentException("Méthode de paiement invalide.");
@@ -150,7 +148,7 @@ class Payment
         return $this->status;
     }
 
-    public function setStatus(string $status): static
+    public function setStatus(string $status): self
     {
         if (!in_array($status, self::STATUS_TYPES, true)) {
             throw new \InvalidArgumentException("Statut de paiement invalide.");
@@ -159,28 +157,27 @@ class Payment
         return $this;
     }
 
-    public function markAsCompleted(): static
+    public function markAsCompleted(): self
     {
         $this->status = self::STATUS_COMPLETED;
         $this->updateTimestamps();
         return $this;
     }
 
-    public function markAsFailed(): static
+    public function markAsFailed(): self
     {
         $this->status = self::STATUS_FAILED;
         $this->updateTimestamps();
         return $this;
     }
 
-    public function cancelPayment(): static
+    public function cancelPayment(): self
     {
-        if ($this->status === self::STATUS_PENDING) {
-            $this->status = self::STATUS_CANCELLED;
-            $this->updateTimestamps();
-        } else {
+        if ($this->status !== self::STATUS_PENDING) {
             throw new \LogicException("Seuls les paiements en attente peuvent être annulés.");
         }
+        $this->status = self::STATUS_CANCELLED;
+        $this->updateTimestamps();
         return $this;
     }
 
@@ -209,7 +206,7 @@ class Payment
         return $this->transaction_id;
     }
 
-    public function setTransactionId(?string $transaction_id): static
+    public function setTransactionId(?string $transaction_id): self
     {
         $this->transaction_id = $transaction_id;
         return $this;
@@ -230,7 +227,7 @@ class Payment
         return $this->subscription;
     }
 
-    public function setSubscription(?Subscription $subscription): static
+    public function setSubscription(?Subscription $subscription): self
     {
         if (!$subscription) {
             throw new \InvalidArgumentException("L'abonnement fourni est invalide.");

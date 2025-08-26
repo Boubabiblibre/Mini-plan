@@ -21,25 +21,6 @@ use OpenApi\Annotations as OA;
  */
 class AuthController extends AbstractController
 {
-    /**
-     * @OA\Post(
-     *     path="/api/auth/login",
-     *     summary="Connexion de l'utilisateur",
-     *     description="Permet à un utilisateur de se connecter avec son email et mot de passe et de recevoir un token JWT.",
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"email", "password"},
-     *             @OA\Property(property="email", type="string", format="email", example="user@example.com"),
-     *             @OA\Property(property="password", type="string", example="SecurePassword123")
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Connexion réussie, retourne un token JWT."),
-     *     @OA\Response(response=400, description="Email et mot de passe requis."),
-     *     @OA\Response(response=401, description="Identifiants incorrects."),
-     *     @OA\Response(response=403, description="Compte inactif.")
-     * )
-     */
     #[Route('/login', name: 'app_login', methods: ['POST'])]
     public function login(
         Request $request,
@@ -51,7 +32,6 @@ class AuthController extends AbstractController
         try {
             $payload = json_decode($request->getContent(), true);
 
-            // Vérification des données entrantes
             $email = $payload['email'] ?? null;
             $password = $payload['password'] ?? null;
 
@@ -59,20 +39,16 @@ class AuthController extends AbstractController
                 return $this->json(['success' => false, 'message' => 'Email et mot de passe requis'], Response::HTTP_BAD_REQUEST);
             }
 
-            // Recherche de l'utilisateur
             $user = $userRepository->findOneBy(['email' => $email]);
 
-            // Vérification de l'authentification
             if (!$user instanceof User || !$passwordHasher->isPasswordValid($user, $password)) {
                 return $this->json(['success' => false, 'message' => 'Identifiants incorrects'], Response::HTTP_UNAUTHORIZED);
             }
 
-            // Vérification si le compte est actif
             if (!$user->isActive()) {
                 return $this->json(['success' => false, 'message' => 'Compte inactif. Veuillez contacter l\'administrateur.'], Response::HTTP_FORBIDDEN);
             }
 
-            // Génération du token JWT
             $token = $jwtManager->create($user);
 
             return $this->json([

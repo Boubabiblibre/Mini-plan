@@ -13,7 +13,7 @@ class BlocklistTokenConfig
     private $enabled;
     private $cache;
     private $_usedProperties = [];
-
+    
     /**
      * @default false
      * @param ParamConfigurator|bool $value
@@ -23,10 +23,10 @@ class BlocklistTokenConfig
     {
         $this->_usedProperties['enabled'] = true;
         $this->enabled = $value;
-
+    
         return $this;
     }
-
+    
     /**
      * Storage to track blocked tokens
      * @default 'cache.app'
@@ -37,10 +37,10 @@ class BlocklistTokenConfig
     {
         $this->_usedProperties['cache'] = true;
         $this->cache = $value;
-
+    
         return $this;
     }
-
+    
     public function __construct(array $value = [])
     {
         if (array_key_exists('enabled', $value)) {
@@ -48,18 +48,18 @@ class BlocklistTokenConfig
             $this->enabled = $value['enabled'];
             unset($value['enabled']);
         }
-
+    
         if (array_key_exists('cache', $value)) {
             $this->_usedProperties['cache'] = true;
             $this->cache = $value['cache'];
             unset($value['cache']);
         }
-
+    
         if ([] !== $value) {
             throw new InvalidConfigurationException(sprintf('The following keys are not supported by "%s": ', __CLASS__).implode(', ', array_keys($value)));
         }
     }
-
+    
     public function toArray(): array
     {
         $output = [];
@@ -69,7 +69,7 @@ class BlocklistTokenConfig
         if (isset($this->_usedProperties['cache'])) {
             $output['cache'] = $this->cache;
         }
-
+    
         return $output;
     }
 

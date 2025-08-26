@@ -3,15 +3,30 @@
 namespace App\Entity;
 
 use App\Repository\SpaceRepository;
+use App\Entity\Invitation; 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Ramsey\Uuid\Doctrine\UuidGenerator;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity; // 👈 AJOUT
 
 #[ORM\Entity(repositoryClass: SpaceRepository::class)]
-#[ORM\Table(name: "spaces")]
 #[ORM\HasLifecycleCallbacks]
+#[ORM\Table(
+    name: "spaces",
+    uniqueConstraints: [
+        new ORM\UniqueConstraint(
+            name: "uniq_space_owner_name",
+            columns: ["created_by_id", "name"]               
+        )
+    ]
+)]
+#[UniqueEntity(
+    fields: ["createdBy", "name"],                           
+    errorPath: "name",
+    message: "Vous avez déjà un espace avec ce nom."
+)]
 class Space
 {
     public const STATUS_ACTIVE = 'active';
@@ -39,7 +54,7 @@ class Space
         pattern: '/\.(jpg|jpeg|png|gif)$/i',
         message: "Le logo doit être une image valide (jpg, jpeg, png, gif)."
     )]
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $logo = null;
 
     #[Assert\Length(max: 1000)]
@@ -73,6 +88,9 @@ class Space
     #[ORM\JoinColumn(nullable: false, onDelete: "CASCADE")]
     private ?User $createdBy = null;
 
+    #[ORM\OneToMany(mappedBy: "space", targetEntity: Invitation::class, cascade: ["persist", "remove"])]
+    private Collection $invitations;
+
     public function __construct()
     {
         $now = new \DateTimeImmutable();
@@ -81,6 +99,7 @@ class Space
         $this->members = new ArrayCollection();
         $this->permissions = new ArrayCollection();
         $this->notifications = new ArrayCollection();
+        $this->invitations = new ArrayCollection();
     }
 
     #[ORM\PrePersist]
@@ -228,5 +247,30 @@ class Space
     public function getFullInfo(): string
     {
         return "{$this->name} - {$this->description}";
+    }
+
+    public function getInvitations(): Collection
+    {
+        return $this->invitations;
+    }
+
+    public function addInvitation(Invitation $invitation): self
+    {
+        if (!$this->invitations->contains($invitation)) {
+            $this->invitations->add($invitation);
+            $invitation->setSpace($this);
+        }
+        return $this;
+    }
+
+    public function removeInvitation(Invitation $invitation): self
+    {
+        if ($this->invitations->removeElement($invitation)) {
+            if ($invitation->getSpace() === $this) {
+                // si JoinColumn nullable=false, tu peux omettre ce set à null
+                $invitation->setSpace(null);
+            }
+        }
+        return $this;
     }
 }

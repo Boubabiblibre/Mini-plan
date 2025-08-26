@@ -2,20 +2,21 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity } from "react-native";
 import { Button, Snackbar, ActivityIndicator } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import styles from "../../styles/LoginStyles";
+import useCookieHook from "../../hooks/use-cookie";
 
 const LoginScreen = () => {
   /* Champs */
-  const [email,    setEmail]    = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   /* Feedback */
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(null);   // plus de <string | null>
-  const [error,   setError]   = useState(null);
+  const [success, setSuccess] = useState(null);
+  const [error, setError] = useState(null);
 
   const navigation = useNavigation();
+  const { setCookie } = useCookieHook(); // ✅ on récupère setCookie du hook
 
   /* --------------------------------------------------------- */
   const handleClickLogin = async () => {
@@ -36,26 +37,32 @@ const LoginScreen = () => {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json(); // <--- manquait ici
+      const data = await response.json();
 
       if (response.ok && data.success) {
-        await AsyncStorage.setItem("token", data.token); // <-- maintenant data.token existe
+        // ✅ Utiliser setCookie à la place de AsyncStorage direct
+        await setCookie("token", data.token);
+        try {
+          const me = await api.get("/api/user/me");
+          if (me?.data?.id) {
+            await AsyncStorage.setItem("userId", me.data.id);
+          }
+        } catch (e) {
+          console.log("Impossible de récupérer /me après login:", e?.response?.data || e.message);
+        }
         setSuccess("Connexion réussie !");
         setTimeout(() => navigation.navigate("Home"), 500);
       } else {
         setError(data.message || "Échec de la connexion");
       }
     } catch (err) {
-      console.log(err);
-      
+      console.error("Erreur login:", err);
       setError("Impossible de contacter le serveur");
     } finally {
       setLoading(false);
     }
   };
 
-
-  /* --------------------------------------------------------- */
   return (
     <View style={styles.container}>
       <Text style={styles.label}>Email</Text>
@@ -85,12 +92,9 @@ const LoginScreen = () => {
       </Button>
 
       <TouchableOpacity onPress={() => navigation.navigate("Register")}>
-        <Text style={styles.link}>
-          Pas encore inscrit ? Inscris-toi
-        </Text>
+        <Text style={styles.link}>Pas encore inscrit ? Inscris-toi</Text>
       </TouchableOpacity>
 
-      {/* Snackbar succès */}
       <Snackbar
         visible={!!success}
         onDismiss={() => setSuccess(null)}
@@ -100,7 +104,6 @@ const LoginScreen = () => {
         {success}
       </Snackbar>
 
-      {/* Snackbar erreur */}
       <Snackbar
         visible={!!error}
         onDismiss={() => setError(null)}
@@ -110,7 +113,6 @@ const LoginScreen = () => {
         {error}
       </Snackbar>
 
-      {/* Loader plein écran (optionnel) */}
       {loading && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator animating size="large" />

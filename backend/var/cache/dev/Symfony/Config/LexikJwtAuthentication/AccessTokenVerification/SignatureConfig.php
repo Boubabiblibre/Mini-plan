@@ -16,7 +16,7 @@ class SignatureConfig
     private $allowedAlgorithms;
     private $keyset;
     private $_usedProperties = [];
-
+    
     /**
      * @param ParamConfigurator|list<ParamConfigurator|mixed> $value
      *
@@ -26,10 +26,10 @@ class SignatureConfig
     {
         $this->_usedProperties['headerCheckers'] = true;
         $this->headerCheckers = $value;
-
+    
         return $this;
     }
-
+    
     /**
      * @param ParamConfigurator|list<ParamConfigurator|mixed> $value
      *
@@ -39,10 +39,10 @@ class SignatureConfig
     {
         $this->_usedProperties['claimCheckers'] = true;
         $this->claimCheckers = $value;
-
+    
         return $this;
     }
-
+    
     /**
      * @param ParamConfigurator|list<ParamConfigurator|mixed> $value
      *
@@ -52,10 +52,10 @@ class SignatureConfig
     {
         $this->_usedProperties['mandatoryClaims'] = true;
         $this->mandatoryClaims = $value;
-
+    
         return $this;
     }
-
+    
     /**
      * @param ParamConfigurator|list<ParamConfigurator|mixed> $value
      *
@@ -65,10 +65,10 @@ class SignatureConfig
     {
         $this->_usedProperties['allowedAlgorithms'] = true;
         $this->allowedAlgorithms = $value;
-
+    
         return $this;
     }
-
+    
     /**
      * The signature keyset. It shall be JWKSet encoded.
      * @default null
@@ -79,10 +79,10 @@ class SignatureConfig
     {
         $this->_usedProperties['keyset'] = true;
         $this->keyset = $value;
-
+    
         return $this;
     }
-
+    
     public function __construct(array $value = [])
     {
         if (array_key_exists('header_checkers', $value)) {
@@ -90,36 +90,36 @@ class SignatureConfig
             $this->headerCheckers = $value['header_checkers'];
             unset($value['header_checkers']);
         }
-
+    
         if (array_key_exists('claim_checkers', $value)) {
             $this->_usedProperties['claimCheckers'] = true;
             $this->claimCheckers = $value['claim_checkers'];
             unset($value['claim_checkers']);
         }
-
+    
         if (array_key_exists('mandatory_claims', $value)) {
             $this->_usedProperties['mandatoryClaims'] = true;
             $this->mandatoryClaims = $value['mandatory_claims'];
             unset($value['mandatory_claims']);
         }
-
+    
         if (array_key_exists('allowed_algorithms', $value)) {
             $this->_usedProperties['allowedAlgorithms'] = true;
             $this->allowedAlgorithms = $value['allowed_algorithms'];
             unset($value['allowed_algorithms']);
         }
-
+    
         if (array_key_exists('keyset', $value)) {
             $this->_usedProperties['keyset'] = true;
             $this->keyset = $value['keyset'];
             unset($value['keyset']);
         }
-
+    
         if ([] !== $value) {
             throw new InvalidConfigurationException(sprintf('The following keys are not supported by "%s": ', __CLASS__).implode(', ', array_keys($value)));
         }
     }
-
+    
     public function toArray(): array
     {
         $output = [];
@@ -138,7 +138,7 @@ class SignatureConfig
         if (isset($this->_usedProperties['keyset'])) {
             $output['keyset'] = $this->keyset;
         }
-
+    
         return $output;
     }
 

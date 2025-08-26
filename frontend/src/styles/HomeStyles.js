@@ -8,6 +8,13 @@ const HomeStyles = StyleSheet.create({
       alignItems: 'center',
       paddingHorizontal: 20,
     },
+    welcomeText: {
+      color: 'white',     // texte en blanc
+      fontSize: 20,       // un peu plus grand
+      fontWeight: 'bold',
+      marginBottom: 20,
+      textAlign: 'center',
+    },
     logo: {
       width: 100,
       height: 100,

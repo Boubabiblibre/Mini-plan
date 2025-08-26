@@ -19,7 +19,7 @@ class HtmlConfigConfig
     private $redoclyConfig;
     private $stoplightConfig;
     private $_usedProperties = [];
-
+    
     /**
      * @default 'cdn'
      * @param ParamConfigurator|mixed $value
@@ -29,10 +29,10 @@ class HtmlConfigConfig
     {
         $this->_usedProperties['assetsMode'] = true;
         $this->assetsMode = $value;
-
+    
         return $this;
     }
-
+    
     /**
      * https://swagger.io/docs/open-source-tools/swagger-ui/usage/configuration/
     */
@@ -44,10 +44,10 @@ class HtmlConfigConfig
         } elseif (0 < \func_num_args()) {
             throw new InvalidConfigurationException('The node created by "swaggerUiConfig()" has already been initialized. You cannot pass values the second time you call swaggerUiConfig().');
         }
-
+    
         return $this->swaggerUiConfig;
     }
-
+    
     /**
      * https://redocly.com/docs/redoc/config/
     */
@@ -59,10 +59,10 @@ class HtmlConfigConfig
         } elseif (0 < \func_num_args()) {
             throw new InvalidConfigurationException('The node created by "redoclyConfig()" has already been initialized. You cannot pass values the second time you call redoclyConfig().');
         }
-
+    
         return $this->redoclyConfig;
     }
-
+    
     /**
      * https://docs.stoplight.io/docs/elements/b074dc47b2826-elements-configuration-options
     */
@@ -74,10 +74,10 @@ class HtmlConfigConfig
         } elseif (0 < \func_num_args()) {
             throw new InvalidConfigurationException('The node created by "stoplightConfig()" has already been initialized. You cannot pass values the second time you call stoplightConfig().');
         }
-
+    
         return $this->stoplightConfig;
     }
-
+    
     public function __construct(array $value = [])
     {
         if (array_key_exists('assets_mode', $value)) {
@@ -85,30 +85,30 @@ class HtmlConfigConfig
             $this->assetsMode = $value['assets_mode'];
             unset($value['assets_mode']);
         }
-
+    
         if (array_key_exists('swagger_ui_config', $value)) {
             $this->_usedProperties['swaggerUiConfig'] = true;
             $this->swaggerUiConfig = new \Symfony\Config\NelmioApiDoc\HtmlConfig\SwaggerUiConfigConfig($value['swagger_ui_config']);
             unset($value['swagger_ui_config']);
         }
-
+    
         if (array_key_exists('redocly_config', $value)) {
             $this->_usedProperties['redoclyConfig'] = true;
             $this->redoclyConfig = new \Symfony\Config\NelmioApiDoc\HtmlConfig\RedoclyConfigConfig($value['redocly_config']);
             unset($value['redocly_config']);
         }
-
+    
         if (array_key_exists('stoplight_config', $value)) {
             $this->_usedProperties['stoplightConfig'] = true;
             $this->stoplightConfig = new \Symfony\Config\NelmioApiDoc\HtmlConfig\StoplightConfigConfig($value['stoplight_config']);
             unset($value['stoplight_config']);
         }
-
+    
         if ([] !== $value) {
             throw new InvalidConfigurationException(sprintf('The following keys are not supported by "%s": ', __CLASS__).implode(', ', array_keys($value)));
         }
     }
-
+    
     public function toArray(): array
     {
         $output = [];
@@ -124,7 +124,7 @@ class HtmlConfigConfig
         if (isset($this->_usedProperties['stoplightConfig'])) {
             $output['stoplight_config'] = $this->stoplightConfig->toArray();
         }
-
+    
         return $output;
     }
 

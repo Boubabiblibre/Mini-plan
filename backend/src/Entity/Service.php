@@ -41,7 +41,7 @@ class Service
     private ?string $provider = null;
 
     #[Assert\NotBlank]
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $logo = null;
 
     #[Assert\Url]

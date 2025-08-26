@@ -6,28 +6,36 @@ const DashboardStyles = StyleSheet.create({
         backgroundColor: '#000',
         padding: 20
     },
+
     tabsContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        marginBottom: 20
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
     },
+
     activeTab: {
-        backgroundColor: '#fff',
-        padding: 10,
-        borderRadius: 20
+    backgroundColor: '#fff',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    marginHorizontal: 8,    // <—
     },
     inactiveTab: {
-        backgroundColor: '#333',
-        padding: 10,
-        borderRadius: 20,
-        marginLeft: 10
+    backgroundColor: '#333',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    marginHorizontal: 8,    // <—
     },
-    activeTabText: {
-        fontWeight: 'bold'
+
+    activeTabText: { 
+        fontWeight: 'bold', color: '#000' 
     },
-    inactiveTabText: {
-        color: '#aaa'
+    inactiveTabText: { 
+        color: '#aaa' 
     },
+
     greeting: {
         fontSize: 22,
         fontWeight: 'bold',
@@ -148,6 +156,50 @@ const DashboardStyles = StyleSheet.create({
         fontSize: 18, 
         fontWeight: 'bold' 
     },
+    topActions: {
+  paddingHorizontal: 16,
+  marginBottom: 10,
+  marginTop: 4,
+  alignItems: 'flex-start',
+},
+
+primaryBtnLg: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 8,
+  backgroundColor: '#B7FF27',
+  paddingVertical: 12,
+  paddingHorizontal: 16,
+  borderRadius: 14,
+  shadowColor: '#000',
+  shadowOpacity: 0.25,
+  shadowRadius: 6,
+  elevation: 5,
+},
+primaryBtnLgText: { color: '#000', fontWeight: '700' },
+
+emptyState: {
+  paddingVertical: 32,
+  paddingHorizontal: 16,
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 8,
+},
+emptyText: { color: '#aaa', marginBottom: 6 },
+
+primaryBtn: {
+  backgroundColor: '#B7FF27',
+  paddingVertical: 10,
+  paddingHorizontal: 16,
+  borderRadius: 10,
+},
+primaryBtnText: { color: '#000', fontWeight: '700' },
+
+// (si pas déjà là)
+dueDot: { width:6, height:6, borderRadius:3, backgroundColor:'#B7FF27', marginTop:4, alignSelf:'center' },
+smallPill: { paddingHorizontal:10, paddingVertical:6, borderRadius:12, backgroundColor:'#222', color:'#fff', fontSize:12, alignSelf:'flex-start' },
+
+
 });
 
 export default DashboardStyles;
